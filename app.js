@@ -7,6 +7,7 @@ const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
 const newsFeed = getData(NEWS_URL);
 const ul = document.createElement("ul");
 
+// # piont3 - 구조 구축
 const newsList = [];
 newsList.push("<ul>");
 for (let i = 0; i < 10; i++) {
@@ -25,7 +26,7 @@ container.innerHTML = newsList.join("");
 window.addEventListener("hashchange", function () {
   const id = location.hash.substring(1);
 
-  // # point1
+  // # point1 - Template literals
   const newsContent = getData(CONTENT_URL.replace("@id", id));
 
   container.innerHTML = `
@@ -37,9 +38,9 @@ window.addEventListener("hashchange", function () {
   `;
 });
 
-// # point2:
+// # point2: refactoring
 function getData(url) {
-  // # point: 3번째 param -> 네트워크 동기적으로 처리
+  // # point: 비동기 처리
   ajax.open("GET", url, false);
   ajax.send();
 
