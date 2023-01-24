@@ -103,3 +103,21 @@
 # 미구현 부분
 
 - read 구분이 page에 관계없이 구분이 되지 않는다.
+
+# point - TS - porting(js -> ts)
+
+- js로 만든 해커뉴스 앱을 "HackerNews_JavaScript_version" 이 브렌치에 작업 했고
+- 이 것을 TS로 porting 하는 작업을 한다.
+
+# point1 - TS - tsconfig.json
+
+- tsconfig.json
+
+  - https://www.typescriptlang.org/ko/docs/handbook/tsconfig-json.html
+
+- 설정 설명
+  - noImplicitAny: any라고 되어 있는 부분을 빨간색 밑줄로 표기하면서 타이핑을 명확하게 하라고 명시하는 기능
+- target, module: ts파일을 js로 변환할때 어떤 문법 체계를 사용할지 설정
+- sourceMap
+  - 개발환경과 실행환경을 같게 하는 것
+  - 브라우저에서 에러가났을떼 개발자 도구에서 보여주는 코드를 TS파일로 보여주기 위해서 설정(추가적으로 더 설명하자면 TS파일을 js파일로 트렌스파일하고 브라우저에서 js파일을 돌리는데 코드는 우리가 작성한 TS을 보면서 디버깅 하기 쉽게 기능을 주어주기 위해서다.)

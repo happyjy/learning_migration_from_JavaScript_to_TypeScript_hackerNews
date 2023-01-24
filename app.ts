@@ -8,12 +8,13 @@ const store = {
   feeds: [],
 };
 
+console.log("ts start");
+
 init();
 newsList();
 window.addEventListener("hashchange", router);
 
 function newsList() {
-  // const page = store.currentPage;
   let newsFeed = store.feeds;
   let template = `
     <div class="bg-gray-600 min-h-screen">
