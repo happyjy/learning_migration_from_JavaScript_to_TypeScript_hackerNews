@@ -8,20 +8,12 @@ const store = {
   feeds: [],
 };
 
+init();
 newsList();
 window.addEventListener("hashchange", router);
 
-function makeList(feeds) {
-  for (let feed of feeds) {
-    feed.read = false;
-  }
-
-  console.log("# in makeList > feeds: ", feeds);
-  return feeds;
-}
-
 function newsList() {
-  const page = store.currentPage;
+  // const page = store.currentPage;
   let newsFeed = store.feeds;
   let template = `
     <div class="bg-gray-600 min-h-screen">
@@ -30,6 +22,7 @@ function newsList() {
           <div class="flex justify-between items-center py-6">
             <div class="flex justify-start">
               <h1 class="font-extrabold">Hacker News</h1>
+              <h2 style="padding-left:30px"> current page: {{__current_page__}}<h2>
             </div>
             <div class="items-center justify-end">
               <a href="#/page/{{__prev_page__}}" class="text-gray-500">
@@ -48,9 +41,7 @@ function newsList() {
     </div>
   `;
 
-  if (newsFeed.length === 0) {
-    newsFeed = store.feeds = makeList(getData(NEWS_URL.replace("@page", page)));
-  }
+  // newsFeed = store.feeds = makeList(getData(NEWS_URL.replace("@page", page)));
   // # piont3 - 구조 구축
   const newsList = [];
   for (let news of newsFeed) {
@@ -80,6 +71,7 @@ function newsList() {
   }
 
   template = template.replace("{{__news_feed__}}", newsList.join(""));
+  template = template.replace("{{__current_page__}}", store.currentPage);
   template = template.replace(
     "{{__prev_page__}}",
     store.currentPage > 1 ? store.currentPage - 1 : 1
@@ -90,7 +82,7 @@ function newsList() {
 }
 
 function newsDetail() {
-  const id = location.hash.substring(7);
+  const id = getId();
 
   // # point1 - Template literals
   const newsContent = getData(CONTENT_URL.replace("@id", id));
@@ -162,6 +154,26 @@ function newsDetail() {
   );
 }
 
+/**
+ * common function list
+ *  - newsList, newsDetail, hashchange eventListener에서 사용되는 function
+ */
+function init() {
+  store.currentPage = getId() || 1;
+  getNewsList();
+}
+
+function getNewsList() {
+  if (store.currentPage === getId() && store.feeds.length !== 0) {
+    return;
+  }
+  store.currentPage = getId();
+  store.feeds = makeList(getData(NEWS_URL.replace("@page", store.currentPage)));
+}
+
+function makeList(feeds) {
+  return feeds.map((feed) => ((feed.read = false), feed));
+}
 // # point4 - router
 function router() {
   const routePath = location.hash;
@@ -169,7 +181,7 @@ function router() {
   if (routePath === "") {
     newsList();
   } else if (routePath.indexOf("#/page/") >= 0) {
-    store.currentPage = Number(routePath.substring(7));
+    getNewsList();
     newsList();
   } else {
     newsDetail();
@@ -182,4 +194,8 @@ function getData(url) {
   ajax.send();
 
   return JSON.parse(ajax.response);
+}
+
+function getId() {
+  return Number(location.hash.substring(7)) || 1;
 }
