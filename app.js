@@ -5,9 +5,8 @@ const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
 const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
 
 newsList();
-newsDetail();
 
-window.addEventListener("hashchange", newsDetail());
+window.addEventListener("hashchange", router);
 
 function newsList() {
   const newsFeed = getData(NEWS_URL);
@@ -45,6 +44,16 @@ function newsDetail() {
   `;
 }
 
+// # point4 - router
+function router() {
+  const routePath = location.hash;
+
+  if (routePath === "") {
+    newsList();
+  } else {
+    newsDetail();
+  }
+}
 // # point2: refactoring
 function getData(url) {
   // # point: 비동기 처리

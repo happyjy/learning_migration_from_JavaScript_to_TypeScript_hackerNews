@@ -27,3 +27,7 @@
 
 - newList에 배열에 rendering할 dom을 Template literals안에 작성
 - document.CreateElement(''); 작성해서 appendChild하는 것보다 구조적으로 간단(= 복잡도 낮아짐)
+
+# point4 - router
+
+- location.hash로 list, detail을 구분
