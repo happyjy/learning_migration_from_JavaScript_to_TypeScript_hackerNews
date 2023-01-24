@@ -1,3 +1,12 @@
+# 기억에 남는 배운점
+
+- template concept
+
+  - js에서 mark up을 쉽게 하기 위한 방법 소개
+
+- 대댓글 기능
+  - 재귀호출, 재귀호출로 넘기는 param을 통해 대댓글의 indent를 설정하는 점
+
 # point - 비동기 처리
 
 - XMLHttpRequest객체의 open 함수 세번째 param은 뭔가?
