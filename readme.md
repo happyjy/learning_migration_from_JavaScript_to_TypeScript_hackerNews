@@ -60,3 +60,19 @@
 - tainwind가 규칙을 정하고 일관되게 적용하는 방식을 취하고 있다.
   - 이런 면에서 소프트웨어 공학적으로 많은 접근 방법이기 때문에 문서를 읽어 보면서
   - 이런식의 일관성을 가져가고 전반적으로 이런 것들을 적용하게 돼서 학습 비용을 좀 떨어트리는 방법을 사용하는 구나
+- template concept lib 소개
+  - https://handlebarsjs.com/
+
+# point8 - font-awesome
+
+- https://cdnjs.com/libraries/font-awesome
+- cdnjs
+  - 각종 lib를 제공하는 사이트
+
+# point9 - 댓글
+
+## point9-1 대댓글(재귀호출, 재귀호출로 넘기는 param-called)
+
+- 재귀호출
+- 재귀호출로 넘기는 param-called
+  - 이 방법으로 padding-left style을 통해 화면에서 indent를 주고 있다.
