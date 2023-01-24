@@ -121,3 +121,51 @@
 - sourceMap
   - 개발환경과 실행환경을 같게 하는 것
   - 브라우저에서 에러가났을떼 개발자 도구에서 보여주는 코드를 TS파일로 보여주기 위해서 설정(추가적으로 더 설명하자면 TS파일을 js파일로 트렌스파일하고 브라우저에서 js파일을 돌리는데 코드는 우리가 작성한 TS을 보면서 디버깅 하기 쉽게 기능을 주어주기 위해서다.)
+
+# point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
+
+# point3 - TS - type alias
+
+```TS
+  type Store = {
+    currentPage: number;
+    feeds: NewsFeed[];
+  };
+
+  type NewsFeed = {
+    id: number;
+    comments_count: number;
+    url: string;
+    user: string;
+    time_ago: string;
+    points: number;
+    title: string;
+    read?: boolean;
+  };
+```
+
+# point4 - TS - 타입 추론
+
+- 타입을 작성하지 않아도 에러가 나지 않는 부분
+- 아래 feed는 store의 feeds의 타입을 추론한 것이다.
+
+```TS
+  for (let feed of store.feeds)
+```
+
+# point5 - TS - 타입 가드
+
+- null이 생기는 타입에 대해서 null을 체크 해야 하는 유형의 코드
+
+```TS
+// as-is를 보면 container가 null인 경우도 있기 때문에 to-be로 타입가드를 적용해서 코드를 작성해줬다.
+
+// # as-is
+container.innerHTML = template;
+
+
+// # to-be
+if (container != null) {
+  container.innerHTML = template;
+}
+```

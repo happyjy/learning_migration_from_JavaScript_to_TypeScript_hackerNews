@@ -1,5 +1,23 @@
-const container = document.getElementById("root");
-const ajax = new XMLHttpRequest();
+//# point3 - TS - type alias
+type Store = {
+  currentPage: number;
+  feeds: NewsFeed[];
+};
+
+type NewsFeed = {
+  id: number;
+  comments_count: number;
+  url: string;
+  user: string;
+  time_ago: string;
+  points: number;
+  title: string;
+  read?: boolean;
+};
+
+//# point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
+const container: HTMLElement | null = document.getElementById("root");
+const ajax: XMLHttpRequest = new XMLHttpRequest();
 const content = document.createElement("div");
 const NEWS_URL = "https://api.hnpwa.com/v0/news/@page.json";
 const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
@@ -15,7 +33,7 @@ newsList();
 window.addEventListener("hashchange", router);
 
 function newsList() {
-  let newsFeed = store.feeds;
+  let newsFeed: NewsFeed[] = store.feeds;
   let template = `
     <div class="bg-gray-600 min-h-screen">
       <div class="bg-white text-xl">
@@ -79,7 +97,11 @@ function newsList() {
   );
   template = template.replace("{{__next_page__}}", store.currentPage + 1);
 
-  container.innerHTML = template;
+  if (container) {
+    container.innerHTML = template;
+  } else {
+    console.error("최상위 컨테이너가 없어 Render를 진행하지 못합니다.");
+  }
 }
 
 function newsDetail() {
@@ -149,10 +171,12 @@ function newsDetail() {
     return commentString.join("");
   }
 
-  container.innerHTML = template.replace(
-    "{{__comments__}}",
-    makeComment(newsContent.comments)
-  );
+  if (container) {
+    container.innerHTML = template.replace(
+      "{{__comments__}}",
+      makeComment(newsContent.comments)
+    );
+  }
 }
 
 /**

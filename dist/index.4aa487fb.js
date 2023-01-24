@@ -557,6 +557,8 @@ function hmrAccept(bundle, id) {
 }
 
 },{}],"86kIg":[function(require,module,exports) {
+//# point3 - TS - type alias
+//# point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
 const container = document.getElementById("root");
 const ajax = new XMLHttpRequest();
 const content = document.createElement("div");
@@ -623,7 +625,8 @@ function newsList() {
     template = template.replace("{{__current_page__}}", store.currentPage);
     template = template.replace("{{__prev_page__}}", store.currentPage > 1 ? store.currentPage - 1 : 1);
     template = template.replace("{{__next_page__}}", store.currentPage + 1);
-    container.innerHTML = template;
+    if (container) container.innerHTML = template;
+    else console.error("최상위 컨테이너가 없어 Render를 진행하지 못합니다.");
 }
 function newsDetail() {
     const id = getId();
@@ -680,7 +683,7 @@ function newsDetail() {
         }
         return commentString.join("");
     }
-    container.innerHTML = template.replace("{{__comments__}}", makeComment(newsContent.comments));
+    if (container) container.innerHTML = template.replace("{{__comments__}}", makeComment(newsContent.comments));
 }
 /**
  * common function list
