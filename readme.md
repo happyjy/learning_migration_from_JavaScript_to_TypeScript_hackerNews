@@ -52,3 +52,11 @@
 - template conept 장점
   - ui가 어떠헥 생겼는지 명확하게 구조를 확실하데 볼수 있다.
   - 어떤 데이터가 들어갈지도 명확하게 볼 수 있다.
+
+# point7 - Tailwind CSS
+
+- get started with cdn
+  - https://tailwindcss.com/docs/installation/play-cdn
+- tainwind가 규칙을 정하고 일관되게 적용하는 방식을 취하고 있다.
+  - 이런 면에서 소프트웨어 공학적으로 많은 접근 방법이기 때문에 문서를 읽어 보면서
+  - 이런식의 일관성을 가져가고 전반적으로 이런 것들을 적용하게 돼서 학습 비용을 좀 떨어트리는 방법을 사용하는 구나
