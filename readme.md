@@ -31,3 +31,7 @@
 # point4 - router
 
 - location.hash로 list, detail을 구분
+
+# point5 - pagination
+
+- pagination 추가와, detail 화면에서 목록 돌아가기 했을때 page를 기억하고 있는 부분을 구현
