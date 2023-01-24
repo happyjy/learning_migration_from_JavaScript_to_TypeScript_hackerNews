@@ -35,3 +35,20 @@
 # point5 - pagination
 
 - pagination 추가와, detail 화면에서 목록 돌아가기 했을때 page를 기억하고 있는 부분을 구현
+
+# point6 - template concept
+
+- 양이 늘어나더 라도 복잡도 자체는 늘어나지 않게 하기 위한 방법
+- 마치 제품을 만들기 위해서 금형을 만든는 것과 같은 원리
+
+  - 현 프로젝트에서는 "{{\_\_문자_문자\_\_}}" 이런 방법으로 template을 만들었다.
+
+- js에서 mark up 하는 방법
+
+  1. DOM api
+  2. 배열에 필요한 dom mark up -> 하나의 문자열로 합치기
+  3. 원하는 모양의 ui를 만들수 있는 template 문자열을 작성
+
+- template conept 장점
+  - ui가 어떠헥 생겼는지 명확하게 구조를 확실하데 볼수 있다.
+  - 어떤 데이터가 들어갈지도 명확하게 볼 수 있다.

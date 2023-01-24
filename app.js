@@ -19,6 +19,18 @@ function newsList() {
     return;
   }
 
+  let template = `
+    <div class="container mx-auto p-4">
+      <h1>Hacker News</h1>
+      <ul>
+        {{__news_feed__}}      
+      </ul>
+      <div>
+        <a href="#/page/{{__prev_page__}}">이전 페이지</a>
+        <a href="#/page/{{__next_page__}}">다음 페이지</a>
+      </div>
+    </div>
+  `;
   // # piont3 - 구조 구축
   const newsList = [];
   newsList.push("<ul>");
@@ -32,14 +44,14 @@ function newsList() {
   `);
   }
 
-  newsList.push("</ul>");
-  newsList.push(`<div>
-    <a href="#/page/${
-      store.currentPage > 1 ? store.currentPage - 1 : 1
-    }">이전 페이지</a>
-    <a href="#/page/${store.currentPage + 1}">다음 페이지</a>
-  </div>`);
-  container.innerHTML = newsList.join("");
+  template = template.replace("{{__news_feed__}}", newsList.join(""));
+  template = template.replace(
+    "{{__prev_page__}}",
+    store.currentPage > 1 ? store.currentPage - 1 : 1
+  );
+  template = template.replace("{{__next_page__}}", store.currentPage + 1);
+
+  container.innerHTML = template;
 }
 
 function newsDetail() {
