@@ -5,20 +5,24 @@ const NEWS_URL = "https://api.hnpwa.com/v0/news/@page.json";
 const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
 const store = {
   currentPage: 1,
+  feeds: [],
 };
 
 newsList();
 window.addEventListener("hashchange", router);
 
-function newsList() {
-  const page = store.currentPage;
-  const newsFeed = getData(NEWS_URL.replace("@page", page));
-
-  if (newsFeed.length === 0) {
-    location.href = `#/page/${Number(location.hash.split("/").pop()) - 1}`;
-    return;
+function makeList(feeds) {
+  for (let feed of feeds) {
+    feed.read = false;
   }
 
+  console.log("# in makeList > feeds: ", feeds);
+  return feeds;
+}
+
+function newsList() {
+  const page = store.currentPage;
+  let newsFeed = store.feeds;
   let template = `
     <div class="bg-gray-600 min-h-screen">
       <div class="bg-white text-xl">
@@ -43,18 +47,25 @@ function newsList() {
       </div>
     </div>
   `;
+
+  if (newsFeed.length === 0) {
+    newsFeed = store.feeds = makeList(getData(NEWS_URL.replace("@page", page)));
+  }
   // # piont3 - 구조 구축
   const newsList = [];
-  newsList.push("<ul>");
   for (let news of newsFeed) {
     newsList.push(`
-      <div class="p-6 bg-white mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
+      <div class="p-6 ${
+        news.read ? "bg-red-500" : "bg-white"
+      } mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
         <div class="flex">
           <div class="flex-auto">
             <a href="#/show/${news.id}">${news.title}</a>  
           </div>
           <div class="text-center text-sm">
-            <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">${news.comments_count}</div>
+            <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">${
+              news.comments_count
+            }</div>
           </div>
         </div>
         <div class="flex mt-3">
@@ -113,25 +124,32 @@ function newsDetail() {
   </div>
 `;
 
+  for (let feed of store.feeds) {
+    if (feed.id === Number(id)) {
+      feed.read = true;
+      break;
+    }
+  }
+
   function makeComment(comments, called = 0) {
     const commentString = [];
 
-    for (let i = 0; i < comments.length; i++) {
-      // console.log("comments[i].comments: ", comments[i].comments);
+    for (let comment of comments) {
+      // # point9 댓글
       commentString.push(`
       <div style="padding-left: ${called * 40}px;" class="mt-4">
         <div class="text-gray-400">
           <i class="fa fa-sort-up mr-2"></i>
-          <strong>${comments[i].user}</strong> ${comments[i].time_ago}
+          <strong>${comment.user}</strong> ${comment.time_ago}
         </div>
-        <p class="text-gray-700">${comments[i].content}</p>
+        <p class="text-gray-700">${comment.content}</p>
       </div>      
     `);
 
       // # point9-1 대댓글
-      if (comments[i].comments.length > 0) {
+      if (comment.comments.length > 0) {
         // # point9-1 대댓글(재귀호출, 재귀호출로 넘기는 param-called)
-        commentString.push(makeComment(comments[i].comments, called + 1));
+        commentString.push(makeComment(comment.comments, called + 1));
       }
     }
 
