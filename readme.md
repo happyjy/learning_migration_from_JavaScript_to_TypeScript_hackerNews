@@ -155,7 +155,7 @@
 
 # point5 - TS - 타입 가드
 
-- null이 생기는 타입에 대해서 null을 체크 해야 하는 유형의 코드
+- null이 생기는 타입에 대해서 null을 체크 해야 하는 유형의 코드를 타입을 방허해야 한다고 해서 타입가드랃고 표현
 
 ```TS
 // as-is를 보면 container가 null인 경우도 있기 때문에 to-be로 타입가드를 적용해서 코드를 작성해줬다.
@@ -169,3 +169,7 @@ if (container != null) {
   container.innerHTML = template;
 }
 ```
+
+# point6 - TS - type extends
+
+- 중복되는 타입을 extends해서 사용할 수 있게 함으로 중복 코드를 줄여준다.

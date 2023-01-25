@@ -1,21 +1,35 @@
-//# point3 - TS - type alias
+// # point3 - TS - type alias
 type Store = {
   currentPage: number;
-  feeds: NewsFeed[];
+  feeds: NewsList[];
 };
 
-type NewsFeed = {
+// # point6 - TS - type extends
+type News = {
   id: number;
-  comments_count: number;
+  time_ago: string;
+  title: string;
   url: string;
   user: string;
-  time_ago: string;
+  content: string;
+};
+
+type NewsList = News & {
+  comments_count: number;
   points: number;
-  title: string;
   read?: boolean;
 };
 
-//# point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
+type NewsDetail = News & {
+  comments: NewsComment[];
+};
+
+type NewsComment = News & {
+  content: NewsComment[];
+  level: number;
+};
+
+// # point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
 const container: HTMLElement | null = document.getElementById("root");
 const ajax: XMLHttpRequest = new XMLHttpRequest();
 const content = document.createElement("div");
@@ -33,10 +47,10 @@ newsList();
 window.addEventListener("hashchange", router);
 
 function newsList() {
-  let newsFeed: NewsFeed[] = store.feeds;
+  let newsFeed: NewsList[] = store.feeds;
   let template = `
-    <div class="bg-gray-600 min-h-screen">
-      <div class="bg-white text-xl">
+  <div class="bg-gray-600 min-h-screen">
+  <div class="bg-white text-xl">
         <div class="mx-auto px-4">
           <div class="flex justify-between items-center py-6">
             <div class="flex justify-start">
@@ -213,7 +227,7 @@ function router() {
   }
 }
 // # point2: refactoring
-function getData(url) {
+function getData(url: string): NewsList | NewsDetail {
   // # point: 비동기 처리
   ajax.open("GET", url, false);
   ajax.send();
