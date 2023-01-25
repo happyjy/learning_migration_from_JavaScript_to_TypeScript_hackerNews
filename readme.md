@@ -173,3 +173,10 @@ if (container != null) {
 # point6 - TS - type extends
 
 - 중복되는 타입을 extends해서 사용할 수 있게 함으로 중복 코드를 줄여준다.
+
+# point6 - TS - generic
+
+- 입려이 n개의 유형일 때 출력도 n개의 유형인 것을 정의
+- 입력 a -> 출력 a, 입력 b -> 출력 b
+- 이 프로젝트에서는 NewsList, NewsDetail 타입에 대해서 generic을 사용하지만
+  - ⭐️ 더 복잡하게 사용하는 예시가 많다고 한다. 그런 것을 배워야 한다.

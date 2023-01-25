@@ -122,7 +122,7 @@ function newsDetail() {
   const id = getId();
 
   // # point1 - Template literals
-  const newsContent = getData(CONTENT_URL.replace("@id", id));
+  const newsContent = getData<NewsDetail>(CONTENT_URL.replace("@id", id));
 
   let template = `
   <div class="bg-gray-600 min-h-screen pb-8">
@@ -160,8 +160,9 @@ function newsDetail() {
     }
   }
 
-  function makeComment(comments, called = 0) {
-    const commentString = [];
+  store.feeds = makeList(
+    getData<NewsList[]>(NEWS_URL.replace("@page", store.currentPage))
+  );
 
     for (let comment of comments) {
       // # point9 댓글
@@ -227,7 +228,7 @@ function router() {
   }
 }
 // # point2: refactoring
-function getData(url: string): NewsList | NewsDetail {
+function getData<AjaxResponse>(url: string): AjaxResponse {
   // # point: 비동기 처리
   ajax.open("GET", url, false);
   ajax.send();
