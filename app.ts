@@ -104,18 +104,20 @@ function newsList() {
   }
 
   template = template.replace("{{__news_feed__}}", newsList.join(""));
-  template = template.replace("{{__current_page__}}", store.currentPage);
+  template = template.replace(
+    "{{__current_page__}}",
+    String(store.currentPage)
+  );
   template = template.replace(
     "{{__prev_page__}}",
-    store.currentPage > 1 ? store.currentPage - 1 : 1
+    String(store.currentPage > 1 ? store.currentPage - 1 : 1)
   );
-  template = template.replace("{{__next_page__}}", store.currentPage + 1);
+  template = template.replace(
+    "{{__next_page__}}",
+    String(store.currentPage + 1)
+  );
 
-  if (container) {
-    container.innerHTML = template;
-  } else {
-    console.error("최상위 컨테이너가 없어 Render를 진행하지 못합니다.");
-  }
+  updateView(template);
 }
 
 function newsDetail() {
@@ -160,38 +162,9 @@ function newsDetail() {
     }
   }
 
-  store.feeds = makeList(
-    getData<NewsList[]>(NEWS_URL.replace("@page", store.currentPage))
+  updateView(
+    template.replace("{{__comments__}}", makeComment(newsContent.comments))
   );
-
-    for (let comment of comments) {
-      // # point9 댓글
-      commentString.push(`
-      <div style="padding-left: ${called * 40}px;" class="mt-4">
-        <div class="text-gray-400">
-          <i class="fa fa-sort-up mr-2"></i>
-          <strong>${comment.user}</strong> ${comment.time_ago}
-        </div>
-        <p class="text-gray-700">${comment.content}</p>
-      </div>      
-    `);
-
-      // # point9-1 대댓글
-      if (comment.comments.length > 0) {
-        // # point9-1 대댓글(재귀호출, 재귀호출로 넘기는 param-called)
-        commentString.push(makeComment(comment.comments, called + 1));
-      }
-    }
-
-    return commentString.join("");
-  }
-
-  if (container) {
-    container.innerHTML = template.replace(
-      "{{__comments__}}",
-      makeComment(newsContent.comments)
-    );
-  }
 }
 
 /**
@@ -203,17 +176,53 @@ function init() {
   getNewsList();
 }
 
+function updateView(html: string): void {
+  if (container) {
+    container.innerHTML = html;
+  } else {
+    console.error("최상위 컨테이너가 없어 UI를 진행하지 못합니다.");
+  }
+}
+
 function getNewsList() {
   if (store.currentPage === getId() && store.feeds.length !== 0) {
     return;
   }
   store.currentPage = getId();
-  store.feeds = makeList(getData(NEWS_URL.replace("@page", store.currentPage)));
+  store.feeds = makeList(
+    getData<NewsList[]>(NEWS_URL.replace("@page", store.currentPage))
+  );
 }
 
-function makeList(feeds) {
+function makeList(feeds: NewsList[]) {
   return feeds.map((feed) => ((feed.read = false), feed));
 }
+
+function makeComment(comments: NewsComment[]): string {
+  const commentString = [];
+
+  for (let comment of comments) {
+    // # point9 댓글
+    commentString.push(`
+    <div style="padding-left: ${comment.level * 40}px;" class="mt-4">
+      <div class="text-gray-400">
+        <i class="fa fa-sort-up mr-2"></i>
+        <strong>${comment.user}</strong> ${comment.time_ago}
+      </div>
+      <p class="text-gray-700">${comment.content}</p>
+    </div>      
+  `);
+
+    // # point9-1 대댓글
+    if (comment.comments.length > 0) {
+      // # point9-1 대댓글(재귀호출, 재귀호출로 넘기는 param-called)
+      commentString.push(makeComment(comment.comments));
+    }
+  }
+
+  return commentString.join("");
+}
+
 // # point4 - router
 function router() {
   const routePath = location.hash;
