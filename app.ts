@@ -1,33 +1,92 @@
-// # point3 - TS - type alias
-type Store = {
-  currentPage: number;
-  feeds: NewsList[];
+// // # point3 - TS - type alias
+//  type Store = {
+//   currentPage: number;
+//   feeds: NewsList[];
+// };
+
+// // # point6 - TS - type extends
+// type News = {
+//   id: number;
+//   time_ago: string;
+//   title: string;
+//   url: string;
+//   user: string;
+//   content: string;
+// };
+
+// type NewsList = News & {
+//   comments_count: number;
+//   points: number;
+//   read?: boolean;
+// };
+
+// type NewsDetail = News & {
+//   comments: NewsComment[];
+// };
+
+// type NewsComment = News & {
+//   content: NewsComment[];
+//   level: number;
+// };
+
+type Ta = {
+  n: number;
 };
 
-// # point6 - TS - type extends
-type News = {
-  id: number;
-  time_ago: string;
-  title: string;
-  url: string;
-  user: string;
-  content: string;
+type Tb = {
+  nn: number;
 };
 
-type NewsList = News & {
-  comments_count: number;
-  points: number;
+type Tc = Ta | Tb;
+// type Tc = Ta & Tb;
+
+const obj: Tc = {
+  n: 1,
+  nn: 2,
+};
+
+interface Ia {
+  n: number;
+}
+interface Ia {
+  nn: number;
+}
+
+const obj1: Ia = {
+  n: 1,
+  nn: 2,
+};
+
+// # point7 - TS - interface, type alias
+interface Store {
+  readonly currentPage: number;
+  readonly feeds: NewsList[];
+}
+
+// # point7 - TS - interface, type alias
+interface News {
+  readonly id: number;
+  readonly time_ago: string;
+  readonly title: string;
+  readonly url: string;
+  readonly user: string;
+  readonly content: string;
+}
+
+interface NewsList extends News {
+  readonly comments_count: number;
+  readonly points: number;
   read?: boolean;
-};
+}
 
-type NewsDetail = News & {
-  comments: NewsComment[];
-};
+interface NewsDetail extends News {
+  readonly comments: NewsComment[];
+}
 
-type NewsComment = News & {
-  content: NewsComment[];
-  level: number;
-};
+interface NewsComment extends News {
+  readonly commnets: NewsComment[];
+  readonly level: number;
+}
 
 // # point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
 const container: HTMLElement | null = document.getElementById("root");

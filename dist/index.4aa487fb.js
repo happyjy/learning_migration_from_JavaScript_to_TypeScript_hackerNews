@@ -557,7 +557,41 @@ function hmrAccept(bundle, id) {
 }
 
 },{}],"86kIg":[function(require,module,exports) {
-// # point3 - TS - type alias
+// // # point3 - TS - type alias
+//  type Store = {
+//   currentPage: number;
+//   feeds: NewsList[];
+// };
+// // # point6 - TS - type extends
+// type News = {
+//   id: number;
+//   time_ago: string;
+//   title: string;
+//   url: string;
+//   user: string;
+//   content: string;
+// };
+// type NewsList = News & {
+//   comments_count: number;
+//   points: number;
+//   read?: boolean;
+// };
+// type NewsDetail = News & {
+//   comments: NewsComment[];
+// };
+// type NewsComment = News & {
+//   content: NewsComment[];
+//   level: number;
+// };
+// type Tc = Ta & Tb;
+const obj = {
+    n: 1,
+    nn: 2
+};
+const obj1 = {
+    n: 1,
+    nn: 2
+};
 // # point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
 const container = document.getElementById("root");
 const ajax = new XMLHttpRequest();
