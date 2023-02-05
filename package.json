@@ -1,0 +1,11 @@
+{
+  "name": "learning-JavaScript-kmtFrontEndAcademy-HackerNewsClient",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/happyjy/learning_JavaScript_hackerNews.git",
+  "author": "happyjy <okwoyjy@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "parcel": "^2.8.3"
+  }
+}
