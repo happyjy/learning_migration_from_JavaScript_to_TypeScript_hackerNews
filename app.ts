@@ -59,8 +59,8 @@ const obj1: Ia = {
 
 // # point7 - TS - interface, type alias
 interface Store {
-  readonly currentPage: number;
-  readonly feeds: NewsList[];
+  currentPage: number;
+  feeds: NewsFeed[];
 }
 
 // # point7 - TS - interface, type alias
@@ -73,7 +73,7 @@ interface News {
   readonly content: string;
 }
 
-interface NewsList extends News {
+interface NewsFeed extends News {
   readonly comments_count: number;
   readonly points: number;
   read?: boolean;
@@ -94,22 +94,48 @@ const ajax: XMLHttpRequest = new XMLHttpRequest();
 const content = document.createElement("div");
 const NEWS_URL = "https://api.hnpwa.com/v0/news/@page.json";
 const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
-const store = {
+const store: Store = {
   currentPage: 1,
   feeds: [],
 };
 
-console.log("ts start");
+// # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
+class Api {
+  constructor(url: string) {
+    this.url = url;
+    this.ajax = new XMLHttpRequest();
+  }
 
-init();
-newsList();
+  protected getRequest<AjaxResponse>(): AjaxResponse {
+    this.ajax.open("GET", this.url, false);
+    this.ajax.send();
+
+    return JSON.parse(this.ajax.response);
+  }
+}
+
+class NewsFeedApi extends Api {
+  getData(): NewsFeed[] {
+    return this.getRequest<NewsFeed[]>();
+  }
+}
+class NewsDetailApi extends Api {
+  getData(): NewsDetail {
+    return this.getRequest<NewsDetail>();
+  }
+}
+
+// init();
 window.addEventListener("hashchange", router);
+router();
 
-function newsList() {
-  let newsFeed: NewsList[] = store.feeds;
+function newsFeed(): void {
+  let api = new NewsFeedApi(NEWS_URL.replace("@page", store.currentPage));
+  let newsFeed: NewsFeed[] = store.feeds;
+  const newsList: string[] = [];
   let template = `
-  <div class="bg-gray-600 min-h-screen">
-  <div class="bg-white text-xl">
+    <div class="bg-gray-600 min-h-screen">
+      <div class="bg-white text-xl">
         <div class="mx-auto px-4">
           <div class="flex justify-between items-center py-6">
             <div class="flex justify-start">
@@ -133,9 +159,12 @@ function newsList() {
     </div>
   `;
 
-  // newsFeed = store.feeds = makeList(getData(NEWS_URL.replace("@page", page)));
+  newsFeed = store.feeds = makeFeeds(api.getData());
+  // if (newsFeed.length === 0) {
+  //   newsFeed = store.feeds = makeFeeds(api.getData());
+  // }
+
   // # piont3 - 구조 구축
-  const newsList = [];
   for (let news of newsFeed) {
     newsList.push(`
       <div class="p-6 ${
@@ -181,10 +210,10 @@ function newsList() {
 
 function newsDetail() {
   const id = getId();
+  const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
+  const newsDetail: NewsDetail = api.getData();
 
   // # point1 - Template literals
-  const newsContent = getData<NewsDetail>(CONTENT_URL.replace("@id", id));
-
   let template = `
   <div class="bg-gray-600 min-h-screen pb-8">
     <div class="bg-white text-xl">
@@ -203,9 +232,9 @@ function newsDetail() {
     </div>
 
     <div class="h-full border rounded-xl bg-white m-6 p-4 ">
-      <h2>${newsContent.title}</h2>
+      <h2>${newsDetail.title}</h2>
       <div class="text-gray-400 h-20">
-        ${newsContent.content}
+        ${newsDetail.content}
       </div>
 
       {{__comments__}}
@@ -222,7 +251,7 @@ function newsDetail() {
   }
 
   updateView(
-    template.replace("{{__comments__}}", makeComment(newsContent.comments))
+    template.replace("{{__comments__}}", makeComment(newsDetail.comments))
   );
 }
 
@@ -230,10 +259,10 @@ function newsDetail() {
  * common function list
  *  - newsList, newsDetail, hashchange eventListener에서 사용되는 function
  */
-function init() {
-  store.currentPage = getId() || 1;
-  getNewsList();
-}
+// function init() {
+//   store.currentPage = getId() || 1;
+//   getNewsList();
+// }
 
 function updateView(html: string): void {
   if (container) {
@@ -243,17 +272,17 @@ function updateView(html: string): void {
   }
 }
 
-function getNewsList() {
-  if (store.currentPage === getId() && store.feeds.length !== 0) {
-    return;
-  }
-  store.currentPage = getId();
-  store.feeds = makeList(
-    getData<NewsList[]>(NEWS_URL.replace("@page", store.currentPage))
-  );
-}
+// function getNewsList() {
+//   if (store.currentPage === getId() && store.feeds.length !== 0) {
+//     return;
+//   }
+//   store.currentPage = getId();
+//   store.feeds = makeFeeds(
+//     getData<NewsFeed[]>(NEWS_URL.replace("@page", store.currentPage))
+//   );
+// }
 
-function makeList(feeds: NewsList[]) {
+function makeFeeds(feeds: NewsFeed[]): NewsFeed[] {
   return feeds.map((feed) => ((feed.read = false), feed));
 }
 
@@ -287,22 +316,25 @@ function router() {
   const routePath = location.hash;
 
   if (routePath === "") {
-    newsList();
+    store.currentPage = getId();
+    newsFeed();
   } else if (routePath.indexOf("#/page/") >= 0) {
-    getNewsList();
-    newsList();
+    // getNewsList();
+    store.currentPage = getId();
+    newsFeed();
   } else {
     newsDetail();
   }
 }
 // # point2: refactoring
-function getData<AjaxResponse>(url: string): AjaxResponse {
-  // # point: 비동기 처리
-  ajax.open("GET", url, false);
-  ajax.send();
+// # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
+// function getData<AjaxResponse>(url: string): AjaxResponse {
+//   // # point: 비동기 처리
+//   ajax.open("GET", url, false);
+//   ajax.send();
 
-  return JSON.parse(ajax.response);
-}
+//   return JSON.parse(ajax.response);
+// }
 
 function getId() {
   return Number(location.hash.substring(7)) || 1;
