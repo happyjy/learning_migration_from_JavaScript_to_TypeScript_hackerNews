@@ -88,6 +88,11 @@ interface NewsComment extends News {
   readonly level: number;
 }
 
+interface RouteInfo {
+  path: string;
+  page: View;
+}
+
 // # point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
 const container: HTMLElement | null = document.getElementById("root");
 const ajax: XMLHttpRequest = new XMLHttpRequest();
@@ -99,12 +104,11 @@ const store: Store = {
   feeds: [],
 };
 
-// init();
-window.addEventListener("hashchange", router);
-router();
-
 // # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
 class Api {
+  url: string;
+  ajax: XMLHttpRequest;
+
   constructor(url: string) {
     this.url = url;
     this.ajax = new XMLHttpRequest();
@@ -115,6 +119,10 @@ class Api {
     this.ajax.send();
 
     return JSON.parse(this.ajax.response);
+  }
+
+  protected setUrl(url: string) {
+    this.url = url;
   }
 }
 
@@ -129,11 +137,11 @@ class NewsDetailApi extends Api {
   }
 }
 
-class View {
-  template: string;
-  renderTemplate: string;
-  container: HTMLElement;
-  htmlList: string[];
+abstract class View {
+  private template: string;
+  private renderTemplate: string;
+  private container: HTMLElement;
+  private htmlList: string[];
 
   constructor(containerId: string, template: string) {
     const containerElement = document.getElementById(containerId);
@@ -149,35 +157,74 @@ class View {
     this.htmlList = [];
   }
 
-  updateView(): void {
+  protected updateView(): void {
     this.container.innerHTML = this.renderTemplate;
     this.renderTemplate = this.template;
   }
 
-  addHtml(htmlString: string): void {
+  protected addHtml(htmlString: string): void {
     this.htmlList.push(htmlString);
-    this.clearHtmlList();
   }
 
-  getHtml(): string {
+  protected getHtml(): string {
     const snapshot = this.htmlList.join("");
-
+    this.clearHtmlList();
     return snapshot;
   }
 
-  setTemplateData(key: string, value: string): void {
+  protected setTemplateData(key: string, value: string): void {
     this.renderTemplate = this.renderTemplate.replace(`{{__${key}__}}`, value);
   }
 
-  clearHtmlList(): void {
+  private clearHtmlList(): void {
     this.htmlList = [];
   }
+
+  abstract render(): void;
 }
 
+class Router {
+  routeTable: RouteInfo[];
+  defaultRoute: RouteInfo | null;
+
+  constructor() {
+    //# point15 - TS - this.route.bind(this)
+    window.addEventListener("hashchange", this.route.bind(this));
+
+    this.routeTable = [];
+    this.defaultRoute = null;
+  }
+
+  setDefaultPage(page: View): void {
+    this.defaultRoute = { path: "", page };
+  }
+
+  addRoutePath(path: string, page: View): void {
+    this.routeTable.push({
+      path,
+      page,
+    });
+  }
+
+  route() {
+    const routePath = location.hash;
+
+    if (routePath === "" && this.defaultRoute) {
+      // point14 - TS - 추상 메소드
+      this.defaultRoute.page.render();
+    }
+
+    for (const routeInfo of this.routeTable) {
+      if (routePath.indexOf(routeInfo.path) >= 0) {
+        routeInfo.page.render();
+        break;
+      }
+    }
+  }
+}
 class NewsFeedView extends View {
-  api: NewsFeedApi;
-  newsFeed: NewsFeed[];
-  template: string;
+  private api: NewsFeedApi;
+  private newsFeed: NewsFeed[];
 
   constructor(containerId: string) {
     // 상위 클래스를 상속 받으면 상위 클래스의 constructor를 호출 해줘야 한다. (= super 키워드 호출)
@@ -206,20 +253,28 @@ class NewsFeedView extends View {
         </div>
       </div>
     `;
+
     super(containerId, template);
-
-    this.api = new NewsFeedApi(NEWS_URL.replace("@page", store.currentPage));
+    this.api = new NewsFeedApi(
+      NEWS_URL.replace("@page", String(store.currentPage))
+    );
     this.newsFeed = store.feeds;
-    this.template = template;
 
-    if (this.makeFeeds.length === 0) {
+    if (this.newsFeed.length === 0) {
       this.newsFeed = store.feeds = this.api.getData();
       this.makeFeeds();
     }
   }
 
   render(): void {
-    let template = this.template;
+    store.currentPage = Number(location.hash.substring(7) || 1);
+
+    // todo: pagination할때 적당한 위치는 어디인가?
+    this.api = new NewsFeedApi(
+      NEWS_URL.replace("@page", String(store.currentPage))
+    );
+    this.newsFeed = store.feeds = this.api.getData();
+    this.makeFeeds();
 
     for (let newsFeedItem of this.newsFeed) {
       const { read, id, title, comments_count, user, points, time_ago } =
@@ -255,19 +310,18 @@ class NewsFeedView extends View {
     );
     this.setTemplateData("next_page", String(store.currentPage + 1));
 
-    this.updateView(template);
+    this.updateView();
 
-    this.newsFeed = store.feeds = this.api.getData();
-    this.makeFeeds();
+    // this.newsFeed = store.feeds = this.api.getData();
+    // this.makeFeeds();
   }
+
   makeFeeds(): void {
     this.newsFeed = this.newsFeed.map((feed) => ((feed.read = false), feed));
   }
 }
 
 class NewsDetailView extends View {
-  template: string;
-
   constructor(containerId: string) {
     // # point1 - Template literals
     const template = `
@@ -297,12 +351,11 @@ class NewsDetailView extends View {
     </div>
   `;
     super(containerId, template);
-    this.template = template;
   }
 
   render() {
     const id = getId();
-    const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
+    const api = new NewsDetailApi(CONTENT_URL.replace("@id", String(id)));
     const newsDetail: NewsDetail = api.getData();
 
     for (let feed of store.feeds) {
@@ -343,31 +396,17 @@ class NewsDetailView extends View {
   }
 }
 
-// # point4 - router
-function router() {
-  const routePath = location.hash;
-
-  if (routePath === "") {
-    store.currentPage = getId();
-    newsFeed();
-  } else if (routePath.indexOf("#/page/") >= 0) {
-    // getNewsList();
-    store.currentPage = getId();
-    newsFeed();
-  } else {
-    newsDetail();
-  }
-}
-// # point2: refactoring
-// # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
-// function getData<AjaxResponse>(url: string): AjaxResponse {
-//   // # point: 비동기 처리
-//   ajax.open("GET", url, false);
-//   ajax.send();
-
-//   return JSON.parse(ajax.response);
-// }
-
 function getId() {
   return Number(location.hash.substring(7)) || 1;
 }
+
+const router: Router = new Router();
+const newsFeedView = new NewsFeedView("root");
+const newsDetailView = new NewsDetailView("root");
+
+router.setDefaultPage(newsFeedView);
+
+router.addRoutePath("/page/", newsFeedView);
+router.addRoutePath("/show/", newsDetailView);
+
+router.route();

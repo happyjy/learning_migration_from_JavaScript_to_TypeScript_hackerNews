@@ -290,3 +290,57 @@ const obj1: Ia = {
 - clearHtmlList 함수
   - 데이터를 직접 초기화 하는것은 좋지 않은 코드라 clearHtmlList 함수를 만듬
   - 다른곳에서도 사용할 수 있기 때문도 이유중 하나
+
+## 추상화 다번째 단계: Router 클래스
+
+- refactoring할때 수정할 부분을 찾을때 PROBLEMS 탭을 보는것도 방법이다.
+- View 클래스 만들때와 다른 방법으로 만들어 본다.
+
+  - 사용하는 쪽에서 먼저 사용하는 형태를 만들고 그것을 class쪽에서 구현하는 형식
+
+- 기존의 router 함수에서 조건문으로 작성한것을 코드 바깥쪽에서 설정형식으로 바꿔준다.
+  - 내가 페이지가 새로 생기면 "Router한테 어떤 hash값이 들어갔을 때 이페이지로 이동시켜줘" 하고 페이지에 class 인스턴스를 넘겨주면 Router가 알아서 작동되게
+
+# point14 - TS - 추상 메소드
+
+- 부모 클래스 View 클래스에는 render 함수가 없다.
+  - 상속 받은 자식 클래스에서만 구현 되어 있다.
+- 부모클래스 View를 타입으로 지정한 변수에 render 함수를 호출하면 아래와 같은 타입스크립트 에러가 발생
+
+  ```
+  Property 'render' does not exist on type 'View'.ts(2339)
+
+  ```
+
+- 이때 해결방법은 부모 클래서 View에 아래와 같이 abstract 키워드를 두곳에 추가하면서 추상메소드를 추가 한다.
+
+  - 추상 메소드: 자식 클래스에서 반드시 구현하라고 하는 추상메소드 역할
+  - 부모 클래스에서는 필요 없으나 자식 클래스들이 구현해야 하는 render 메소드
+
+  ```
+  abstract class View {
+    ...
+
+    abstract render(): void;
+
+    ...
+  }
+  ```
+
+- 위와 같이 설정하면 실제 사용하는 곳에서는 에러가 발생하지 않는다.
+  ```
+  this.defaultRoute.page.render();
+  ```
+
+# point15 - TS - this.route.bind(this)
+
+- this.route에 bind(this)설정한 이유
+
+  - this.route에는 this.defaultRoute, this.routeTable코드가 있고 이건 Router 인스턴스 속성의 일부다.
+  - 즉 this.route 함수 내에서 this는 Router 인스턴스로 고정되어야 한다.
+  - bind를 this로 하지 않는다면 window 객체로 설정된다.
+
+# point16 - TS - class와 메소드의 속성의 접근 범위를 적절히 제어
+
+- private을 클래스 변수에 설정
+- protected를 클래스 함수에 설정

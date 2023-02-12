@@ -602,9 +602,6 @@ const store = {
     currentPage: 1,
     feeds: []
 };
-// init();
-window.addEventListener("hashchange", router);
-router();
 // # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
 class Api {
     constructor(url){
@@ -615,6 +612,9 @@ class Api {
         this.ajax.open("GET", this.url, false);
         this.ajax.send();
         return JSON.parse(this.ajax.response);
+    }
+    setUrl(url) {
+        this.url = url;
     }
 }
 class NewsFeedApi extends Api {
@@ -643,10 +643,10 @@ class View {
     }
     addHtml(htmlString) {
         this.htmlList.push(htmlString);
-        this.clearHtmlList();
     }
     getHtml() {
         const snapshot = this.htmlList.join("");
+        this.clearHtmlList();
         return snapshot;
     }
     setTemplateData(key, value) {
@@ -654,6 +654,35 @@ class View {
     }
     clearHtmlList() {
         this.htmlList = [];
+    }
+}
+class Router {
+    constructor(){
+        //# point15 - TS - this.route.bind(this)
+        window.addEventListener("hashchange", this.route.bind(this));
+        this.routeTable = [];
+        this.defaultRoute = null;
+    }
+    setDefaultPage(page) {
+        this.defaultRoute = {
+            path: "",
+            page
+        };
+    }
+    addRoutePath(path, page) {
+        this.routeTable.push({
+            path,
+            page
+        });
+    }
+    route() {
+        const routePath = location.hash;
+        if (routePath === "" && this.defaultRoute) // point14 - TS - 추상 메소드
+        this.defaultRoute.page.render();
+        for (const routeInfo of this.routeTable)if (routePath.indexOf(routeInfo.path) >= 0) {
+            routeInfo.page.render();
+            break;
+        }
     }
 }
 class NewsFeedView extends View {
@@ -685,16 +714,19 @@ class NewsFeedView extends View {
       </div>
     `;
         super(containerId, template);
-        this.api = new NewsFeedApi(NEWS_URL.replace("@page", store.currentPage));
+        this.api = new NewsFeedApi(NEWS_URL.replace("@page", String(store.currentPage)));
         this.newsFeed = store.feeds;
-        this.template = template;
-        if (this.makeFeeds.length === 0) {
+        if (this.newsFeed.length === 0) {
             this.newsFeed = store.feeds = this.api.getData();
             this.makeFeeds();
         }
     }
     render() {
-        let template = this.template;
+        store.currentPage = Number(location.hash.substring(7) || 1);
+        // todo: pagination할때 적당한 위치는 어디인가?
+        this.api = new NewsFeedApi(NEWS_URL.replace("@page", String(store.currentPage)));
+        this.newsFeed = store.feeds = this.api.getData();
+        this.makeFeeds();
         for (let newsFeedItem of this.newsFeed){
             const { read , id , title , comments_count , user , points , time_ago  } = newsFeedItem;
             this.addHtml(`
@@ -721,9 +753,9 @@ class NewsFeedView extends View {
         this.setTemplateData("current_page", String(store.currentPage));
         this.setTemplateData("prev_page", String(store.currentPage > 1 ? store.currentPage - 1 : 1));
         this.setTemplateData("next_page", String(store.currentPage + 1));
-        this.updateView(template);
-        this.newsFeed = store.feeds = this.api.getData();
-        this.makeFeeds();
+        this.updateView();
+    // this.newsFeed = store.feeds = this.api.getData();
+    // this.makeFeeds();
     }
     makeFeeds() {
         this.newsFeed = this.newsFeed.map((feed)=>(feed.read = false, feed));
@@ -759,20 +791,19 @@ class NewsDetailView extends View {
     </div>
   `;
         super(containerId, template);
-        this.template = template;
     }
     render() {
         const id = getId();
-        const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
-        const newsDetail1 = api.getData();
+        const api = new NewsDetailApi(CONTENT_URL.replace("@id", String(id)));
+        const newsDetail = api.getData();
         for (let feed of store.feeds)if (feed.id === Number(id)) {
             feed.read = true;
             break;
         }
         this.setTemplateData("currentPage", String(store.currentPage));
-        this.setTemplateData("title", newsDetail1.title);
-        this.setTemplateData("content", newsDetail1.content);
-        this.setTemplateData("comments", this.makeComment(newsDetail1.comments));
+        this.setTemplateData("title", newsDetail.title);
+        this.setTemplateData("content", newsDetail.content);
+        this.setTemplateData("comments", this.makeComment(newsDetail.comments));
         this.updateView();
     }
     makeComment(comments) {
@@ -794,29 +825,16 @@ class NewsDetailView extends View {
         return this.getHtml();
     }
 }
-// # point4 - router
-function router() {
-    const routePath = location.hash;
-    if (routePath === "") {
-        store.currentPage = getId();
-        newsFeed();
-    } else if (routePath.indexOf("#/page/") >= 0) {
-        // getNewsList();
-        store.currentPage = getId();
-        newsFeed();
-    } else newsDetail();
-}
-// # point2: refactoring
-// # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
-// function getData<AjaxResponse>(url: string): AjaxResponse {
-//   // # point: 비동기 처리
-//   ajax.open("GET", url, false);
-//   ajax.send();
-//   return JSON.parse(ajax.response);
-// }
 function getId() {
     return Number(location.hash.substring(7)) || 1;
 }
+const router = new Router();
+const newsFeedView = new NewsFeedView("root");
+const newsDetailView = new NewsDetailView("root");
+router.setDefaultPage(newsFeedView);
+router.addRoutePath("/page/", newsFeedView);
+router.addRoutePath("/show/", newsDetailView);
+router.route();
 
 },{}]},["1nhj6","2iQTb"], "2iQTb", "parcelRequireed17")
 
