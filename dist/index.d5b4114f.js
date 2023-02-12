@@ -142,13 +142,13 @@
       this[globalName] = mainExports;
     }
   }
-})({"8w95K":[function(require,module,exports) {
+})({"1nhj6":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
-module.bundle.HMR_BUNDLE_ID = "ef291ef84aa487fb";
+module.bundle.HMR_BUNDLE_ID = "e2205b50d5b4114f";
 "use strict";
 /* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, globalThis, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
@@ -556,7 +556,7 @@ function hmrAccept(bundle, id) {
     });
 }
 
-},{}],"86kIg":[function(require,module,exports) {
+},{}],"2iQTb":[function(require,module,exports) {
 // // # point3 - TS - type alias
 //  type Store = {
 //   currentPage: number;
@@ -690,45 +690,69 @@ class NewsFeedView {
         return feeds.map((feed)=>(feed.read = false, feed));
     }
 }
-function newsDetail() {
-    const id = getId();
-    const api1 = new NewsDetailApi(CONTENT_URL.replace("@id", id));
-    const newsDetail = api1.getData();
-    // # point1 - Template literals
-    let template = `
-  <div class="bg-gray-600 min-h-screen pb-8">
-    <div class="bg-white text-xl">
-      <div class="mx-auto px-4">
-        <div class="flex justify-between items-center py-6">
-          <div class="flex justify-start">
-            <h1 class="font-extrabold">Hacker News</h1>
-          </div>
-          <div class="items-center justify-end">
-            <a href="#/page/${store.currentPage}" class="text-gray-500">
-              <i class="fa fa-times"></i>
-            </a>
+class NewsDetailView {
+    constructor(){
+        // # point1 - Template literals
+        this.template = `
+    <div class="bg-gray-600 min-h-screen pb-8">
+      <div class="bg-white text-xl">
+        <div class="mx-auto px-4">
+          <div class="flex justify-between items-center py-6">
+            <div class="flex justify-start">
+              <h1 class="font-extrabold">Hacker News</h1>
+            </div>
+            <div class="items-center justify-end">
+              <a href="#/page/${store.currentPage}" class="text-gray-500">
+                <i class="fa fa-times"></i>
+              </a>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="h-full border rounded-xl bg-white m-6 p-4 ">
-      <h2>${newsDetail.title}</h2>
-      <div class="text-gray-400 h-20">
-        ${newsDetail.content}
+  
+      <div class="h-full border rounded-xl bg-white m-6 p-4 ">
+        <h2>${newsDetail.title}</h2>
+        <div class="text-gray-400 h-20">
+          ${newsDetail.content}
+        </div>
+  
+        {{__comments__}}
+  
       </div>
-
-      {{__comments__}}
-
     </div>
-  </div>
-`;
-    for (let feed of store.feeds)if (feed.id === Number(id)) {
-        feed.read = true;
-        break;
+  `;
     }
-    updateView(template.replace("{{__comments__}}", makeComment(newsDetail.comments)));
+    render() {
+        const id = getId();
+        const api1 = new NewsDetailApi(CONTENT_URL.replace("@id", id));
+        const newsDetail = api1.getData();
+        for (let feed of store.feeds)if (feed.id === Number(id)) {
+            feed.read = true;
+            break;
+        }
+        updateView(this.template.replace("{{__comments__}}", makeComment(newsDetail.comments)));
+    }
+    makeComment(comments) {
+        const commentString = [];
+        for (let comment of comments){
+            // # point9 댓글
+            commentString.push(`
+      <div style="padding-left: ${comment.level * 40}px;" class="mt-4">
+        <div class="text-gray-400">
+          <i class="fa fa-sort-up mr-2"></i>
+          <strong>${comment.user}</strong> ${comment.time_ago}
+        </div>
+        <p class="text-gray-700">${comment.content}</p>
+      </div>      
+    `);
+            // # point9-1 대댓글
+            if (comment.comments.length > 0) // # point9-1 대댓글(재귀호출, 재귀호출로 넘기는 param-called)
+            commentString.push(makeComment(comment.comments));
+        }
+        return commentString.join("");
+    }
 }
+function newsDetail() {}
 /**
  * common function list
  *  - newsList, newsDetail, hashchange eventListener에서 사용되는 function
@@ -792,6 +816,6 @@ function getId() {
     return Number(location.hash.substring(7)) || 1;
 }
 
-},{}]},["8w95K","86kIg"], "86kIg", "parcelRequire94c2")
+},{}]},["1nhj6","2iQTb"], "2iQTb", "parcelRequireed17")
 
-//# sourceMappingURL=index.4aa487fb.js.map
+//# sourceMappingURL=index.d5b4114f.js.map

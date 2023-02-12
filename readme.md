@@ -238,3 +238,18 @@ const obj1: Ia = {
 - 상속을 다루는 방법 2가지
   - 클래스
   - 믹스인
+
+# point12 - TS - 추상화 작업 준비
+
+- 상속, 믹스인을 통해서 추상화 작업 진행
+- 함수로 만든것을 클래스로 변경
+  - 함수 목록: newsFeed, newsDetail/ updateView, makeFeeds, makeComment/ router
+  - 함수별 역할
+    - newsFeed 함수, newsDetail 함수: UI 업데이트 함수
+    - updateView 함수, makeFeeds 함수, makeComment 함수: UI를 업데이트하기 위한 보조적인 기능
+    - Router 함수
+- `NewsFeedView 클래스 생성`
+  - newsFeed, makeFeeds 2개 function을 NewsFeedView 클래스 속성으로 refactoring
+  - 같은 목적을 위해서 작동되는 코드를 묶는 작업
+- `NewsDetailView 클래스 생성`
+  - newsDetail, makeComment 2개의 function을 클래스 속성으로 refactoring
