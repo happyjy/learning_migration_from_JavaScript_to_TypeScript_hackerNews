@@ -275,5 +275,18 @@ const obj1: Ia = {
 
 ## 추상화 세번째 단계: 상위클래스 View를 상속 받은 하위 클래스(NewsFeedView, NewsDetailView) render 부분을 추상화
 
+## 추상화 세번째 단계: 상위클래스 View를 상속 받은 하위 클래스(NewsFeedView, NewsDetailView) render 부분을 추상화
+
 - View 클래스에 addHtml, getHtml 함수를 만들면서 NewsFeedView, NewsDetailView 클래스 render 함수 부분을 추상화
   - 데이터를 외부로 직접 드러내기 보다는 함수로 접근하는 방법이 좋다.(eg. getter, setter)
+
+## 추상화 네번째 단계: 상위클래스 View에 setTemplateData, clearHtmlList 함수 추가
+
+- setTemplateData 함수 추가
+
+  - template에 값을 설정하는 부분 refactoring
+  - 공통부분을 함수로 빼면서 코드가 깔끔해지고 깔금해지고 가독성 올라감.
+
+- clearHtmlList 함수
+  - 데이터를 직접 초기화 하는것은 좋지 않은 코드라 clearHtmlList 함수를 만듬
+  - 다른곳에서도 사용할 수 있기 때문도 이유중 하나

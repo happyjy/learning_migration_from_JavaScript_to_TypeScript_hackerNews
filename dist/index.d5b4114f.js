@@ -634,16 +634,26 @@ class View {
         throw "최상위 컨테이너가 없어 UI를 진행하지 못합니다.";
         this.container = containerElement;
         this.template = template;
+        this.renderTemplate = template;
         this.htmlList = [];
     }
-    updateView(html) {
-        this.container.innerHTML = html;
+    updateView() {
+        this.container.innerHTML = this.renderTemplate;
+        this.renderTemplate = this.template;
     }
     addHtml(htmlString) {
         this.htmlList.push(htmlString);
+        this.clearHtmlList();
     }
     getHtml() {
-        return this.htmlList.join();
+        const snapshot = this.htmlList.join("");
+        return snapshot;
+    }
+    setTemplateData(key, value) {
+        this.renderTemplate = this.renderTemplate.replace(`{{__${key}__}}`, value);
+    }
+    clearHtmlList() {
+        this.htmlList = [];
     }
 }
 class NewsFeedView extends View {
@@ -707,10 +717,10 @@ class NewsFeedView extends View {
         </div>    
       `);
         }
-        template = template.replace("{{__news_feed__}}", this.getHtml());
-        template = template.replace("{{__current_page__}}", String(store.currentPage));
-        template = template.replace("{{__prev_page__}}", String(store.currentPage > 1 ? store.currentPage - 1 : 1));
-        template = template.replace("{{__next_page__}}", String(store.currentPage + 1));
+        this.setTemplateData("news_feed", this.getHtml());
+        this.setTemplateData("current_page", String(store.currentPage));
+        this.setTemplateData("prev_page", String(store.currentPage > 1 ? store.currentPage - 1 : 1));
+        this.setTemplateData("next_page", String(store.currentPage + 1));
         this.updateView(template);
         this.newsFeed = store.feeds = this.api.getData();
         this.makeFeeds();
@@ -731,7 +741,7 @@ class NewsDetailView extends View {
               <h1 class="font-extrabold">Hacker News</h1>
             </div>
             <div class="items-center justify-end">
-              <a href="#/page/${store.currentPage}" class="text-gray-500">
+              <a href="#/page/{{__currentPage__}}" class="text-gray-500">
                 <i class="fa fa-times"></i>
               </a>
             </div>
@@ -740,13 +750,11 @@ class NewsDetailView extends View {
       </div>
   
       <div class="h-full border rounded-xl bg-white m-6 p-4 ">
-        <h2>${newsDetail.title}</h2>
+        <h2>{{__title__}}</h2>
         <div class="text-gray-400 h-20">
-          ${newsDetail.content}
+          {{__content__}}
         </div>
-  
         {{__comments__}}
-  
       </div>
     </div>
   `;
@@ -761,7 +769,11 @@ class NewsDetailView extends View {
             feed.read = true;
             break;
         }
-        this.updateView(this.template.replace("{{__comments__}}", this.makeComment(newsDetail1.comments)));
+        this.setTemplateData("currentPage", String(store.currentPage));
+        this.setTemplateData("title", newsDetail1.title);
+        this.setTemplateData("content", newsDetail1.content);
+        this.setTemplateData("comments", this.makeComment(newsDetail1.comments));
+        this.updateView();
     }
     makeComment(comments) {
         for (let comment of comments){
