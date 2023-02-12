@@ -602,6 +602,9 @@ const store = {
     currentPage: 1,
     feeds: []
 };
+// init();
+window.addEventListener("hashchange", router);
+router();
 // # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
 class Api {
     constructor(url){
@@ -624,14 +627,29 @@ class NewsDetailApi extends Api {
         return this.getRequest();
     }
 }
-// init();
-window.addEventListener("hashchange", router);
-router();
-class NewsFeedView {
-    constructor(){
-        this.api = new NewsFeedApi(NEWS_URL.replace("@page", store.currentPage));
-        this.newsFeed = store.feeds;
-        this.template = `
+class View {
+    constructor(containerId, template){
+        const containerElement = document.getElementById(containerId);
+        if (!containerElement) // 프로그램을 종료
+        throw "최상위 컨테이너가 없어 UI를 진행하지 못합니다.";
+        this.container = containerElement;
+        this.template = template;
+        this.htmlList = [];
+    }
+    updateView(html) {
+        this.container.innerHTML = html;
+    }
+    addHtml(htmlString) {
+        this.htmlList.push(htmlString);
+    }
+    getHtml() {
+        return this.htmlList.join();
+    }
+}
+class NewsFeedView extends View {
+    constructor(containerId){
+        // 상위 클래스를 상속 받으면 상위 클래스의 constructor를 호출 해줘야 한다. (= super 키워드 호출)
+        const template = `
       <div class="bg-gray-600 min-h-screen">
         <div class="bg-white text-xl">
           <div class="mx-auto px-4">
@@ -656,44 +674,55 @@ class NewsFeedView {
         </div>
       </div>
     `;
+        super(containerId, template);
+        this.api = new NewsFeedApi(NEWS_URL.replace("@page", store.currentPage));
+        this.newsFeed = store.feeds;
+        this.template = template;
+        if (this.makeFeeds.length === 0) {
+            this.newsFeed = store.feeds = this.api.getData();
+            this.makeFeeds();
+        }
     }
     render() {
-        let newsList = [];
         let template = this.template;
-        for (let news of this.newsFeed)newsList.push(`
-        <div class="p-6 ${news.read ? "bg-red-500" : "bg-white"} mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
+        for (let newsFeedItem of this.newsFeed){
+            const { read , id , title , comments_count , user , points , time_ago  } = newsFeedItem;
+            this.addHtml(`
+        <div class="p-6 ${read ? "bg-red-500" : "bg-white"} mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
           <div class="flex">
             <div class="flex-auto">
-              <a href="#/show/${news.id}">${news.title}</a>  
+              <a href="#/show/${id}">${title}</a>  
             </div>
             <div class="text-center text-sm">
-              <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">${news.comments_count}</div>
+              <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">${comments_count}</div>
             </div>
           </div>
           <div class="flex mt-3">
             <div class="grid grid-cols-3 text-sm text-gray-500">
-              <div><i class="fas fa-user mr-1"></i>${news.user}</div>
-              <div><i class="fas fa-heart mr-1"></i>${news.points}</div>
-              <div><i class="far fa-clock mr-1"></i>${news.time_ago}</div>
+              <div><i class="fas fa-user mr-1"></i>${user}</div>
+              <div><i class="fas fa-heart mr-1"></i>${points}</div>
+              <div><i class="far fa-clock mr-1"></i>${time_ago}</div>
             </div>  
           </div>
         </div>    
       `);
-        template = template.replace("{{__news_feed__}}", newsList.join(""));
+        }
+        template = template.replace("{{__news_feed__}}", this.getHtml());
         template = template.replace("{{__current_page__}}", String(store.currentPage));
         template = template.replace("{{__prev_page__}}", String(store.currentPage > 1 ? store.currentPage - 1 : 1));
         template = template.replace("{{__next_page__}}", String(store.currentPage + 1));
-        updateView(template);
-        this.newsFeed = store.feeds = this.makeFeeds(api.getData());
+        this.updateView(template);
+        this.newsFeed = store.feeds = this.api.getData();
+        this.makeFeeds();
     }
-    makeFeeds(feeds) {
-        return feeds.map((feed)=>(feed.read = false, feed));
+    makeFeeds() {
+        this.newsFeed = this.newsFeed.map((feed)=>(feed.read = false, feed));
     }
 }
-class NewsDetailView {
-    constructor(){
+class NewsDetailView extends View {
+    constructor(containerId){
         // # point1 - Template literals
-        this.template = `
+        const template = `
     <div class="bg-gray-600 min-h-screen pb-8">
       <div class="bg-white text-xl">
         <div class="mx-auto px-4">
@@ -721,22 +750,23 @@ class NewsDetailView {
       </div>
     </div>
   `;
+        super(containerId, template);
+        this.template = template;
     }
     render() {
         const id = getId();
-        const api1 = new NewsDetailApi(CONTENT_URL.replace("@id", id));
-        const newsDetail = api1.getData();
+        const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
+        const newsDetail1 = api.getData();
         for (let feed of store.feeds)if (feed.id === Number(id)) {
             feed.read = true;
             break;
         }
-        updateView(this.template.replace("{{__comments__}}", makeComment(newsDetail.comments)));
+        this.updateView(this.template.replace("{{__comments__}}", this.makeComment(newsDetail1.comments)));
     }
     makeComment(comments) {
-        const commentString = [];
         for (let comment of comments){
             // # point9 댓글
-            commentString.push(`
+            this.addHtml(`
       <div style="padding-left: ${comment.level * 40}px;" class="mt-4">
         <div class="text-gray-400">
           <i class="fa fa-sort-up mr-2"></i>
@@ -747,50 +777,10 @@ class NewsDetailView {
     `);
             // # point9-1 대댓글
             if (comment.comments.length > 0) // # point9-1 대댓글(재귀호출, 재귀호출로 넘기는 param-called)
-            commentString.push(makeComment(comment.comments));
+            this.addHtml(this.makeComment(comment.comments));
         }
-        return commentString.join("");
+        return this.getHtml();
     }
-}
-function newsDetail() {}
-/**
- * common function list
- *  - newsList, newsDetail, hashchange eventListener에서 사용되는 function
- */ // function init() {
-//   store.currentPage = getId() || 1;
-//   getNewsList();
-// }
-function updateView(html) {
-    if (container) container.innerHTML = html;
-    else console.error("최상위 컨테이너가 없어 UI를 진행하지 못합니다.");
-}
-// function getNewsList() {
-//   if (store.currentPage === getId() && store.feeds.length !== 0) {
-//     return;
-//   }
-//   store.currentPage = getId();
-//   store.feeds = makeFeeds(
-//     getData<NewsFeed[]>(NEWS_URL.replace("@page", store.currentPage))
-//   );
-// }
-function makeComment(comments) {
-    const commentString = [];
-    for (let comment of comments){
-        // # point9 댓글
-        commentString.push(`
-    <div style="padding-left: ${comment.level * 40}px;" class="mt-4">
-      <div class="text-gray-400">
-        <i class="fa fa-sort-up mr-2"></i>
-        <strong>${comment.user}</strong> ${comment.time_ago}
-      </div>
-      <p class="text-gray-700">${comment.content}</p>
-    </div>      
-  `);
-        // # point9-1 대댓글
-        if (comment.comments.length > 0) // # point9-1 대댓글(재귀호출, 재귀호출로 넘기는 param-called)
-        commentString.push(makeComment(comment.comments));
-    }
-    return commentString.join("");
 }
 // # point4 - router
 function router() {

@@ -253,3 +253,27 @@ const obj1: Ia = {
   - 같은 목적을 위해서 작동되는 코드를 묶는 작업
 - `NewsDetailView 클래스 생성`
   - newsDetail, makeComment 2개의 function을 클래스 속성으로 refactoring
+
+# point13 - TS - 추상화 작업 시작
+
+- 강의: 김민태의 프론트엔드 아카데미: 제1강 JavaScript&TypeScript Essential
+
+  - CH04_06. 뷰 클래스로 코드 구조 개선 (08:00분쯤 내용)
+  - <u>`클래스를 추상화 시키는 과정을 설명한 강의` - 추상화 하는 과정의 설명이 아주 인상 깊었다.</u>
+
+## 추상화 첫번째 단계: NeswFeedView, NewsDetailView 클래스 생성
+
+- newsFeed, makeFeeds 2개 function을 NewsFeedView 클래스 속성으로 refactoring
+- newsDetail,makeComment 2개의 function을 클래스 속성으로 refactoring
+- 주의 코드 실행되지 않음 refactoring 중
+
+## 추상화 두번째 단계: 상위 클래스로 지정할 View 클래스 생성 (NewsFeedView, NewsDetailView 클래스의 공통 요소를 추상화 시키기 위해서)
+
+- <u>하위 클래스에 있는 공통되는 요소(변수 , 함수)를 상위 클래스로 보내면서 추상화 시키는게 목표</u>
+- constructor refactor: api롤 받은 데이터를 설정하고 render하는 과정 refactor
+- View, NewsFeedView 클래스만 refactor(NewsDetailView는 다음 단계에서 진행)
+
+## 추상화 세번째 단계: 상위클래스 View를 상속 받은 하위 클래스(NewsFeedView, NewsDetailView) render 부분을 추상화
+
+- View 클래스에 addHtml, getHtml 함수를 만들면서 NewsFeedView, NewsDetailView 클래스 render 함수 부분을 추상화
+  - 데이터를 외부로 직접 드러내기 보다는 함수로 접근하는 방법이 좋다.(eg. getter, setter)
