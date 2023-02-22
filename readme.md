@@ -1,3 +1,24 @@
+# 프로젝트 실행방법
+
+1. parcel 설치
+
+```
+npm install -g parcel-bundler
+
+또는
+
+npm install -g parcel
+```
+
+2. parcel을 통해 빌드/ index.html 실행
+
+```
+parcel index.html
+```
+
+- 참고
+  - [parcel](https://ko.parceljs.org/getting_started.html)
+
 # 기억에 남는 배운점
 
 - template concept
@@ -344,3 +365,14 @@ const obj1: Ia = {
 
 - private을 클래스 변수에 설정
 - protected를 클래스 함수에 설정
+
+# point17 - TS - 파일의 분리, 더욱 성장할 앱을 위한 준비
+
+- app.ts파일에 코드가 400라인 넘게 있다.(400라인 정도는 많은건 아니라고함.)
+- 하지만 기능추가가 되면 코드가 많아 질때 문제가 된다.
+
+## point17-1 파일 분리
+
+## point17-2 모듈 스펙
+
+- import/ export
