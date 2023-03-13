@@ -561,52 +561,60 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 var _router = require("./core/router");
 var _routerDefault = parcelHelpers.interopDefault(_router);
 var _page = require("./page");
-// # point2 - TS - vscode에서 기본으로 제공하는 TS definition을 확인해서 TS작성
-const container = document.getElementById("root");
-const ajax = new XMLHttpRequest();
-const content = document.createElement("div");
-const store = {
-    currentPage: 1,
-    feeds: []
-};
-window.store = store;
+var _store = require("./store");
+const store = new (0, _store.Store)();
 const router = new (0, _routerDefault.default)();
-const newsFeedView = new (0, _page.NewsFeedView)("root");
-const newsDetailView = new (0, _page.NewsDetailView)("root");
+const newsFeedView = new (0, _page.NewsFeedView)("root", store);
+const newsDetailView = new (0, _page.NewsDetailView)("root", store);
 router.setDefaultPage(newsFeedView);
-router.addRoutePath("/page/", newsFeedView);
-router.addRoutePath("/show/", newsDetailView);
-router.route();
+router.addRoutePath("/page/", newsFeedView, /page\/(\d+)/);
+router.addRoutePath("/show/", newsDetailView, /show\/(\d+)/);
 
-},{"./core/router":"f4hn2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./page":"4GSC5"}],"f4hn2":[function(require,module,exports) {
+},{"./core/router":"f4hn2","./page":"4GSC5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./store":"1eAgN"}],"f4hn2":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 class Router {
     constructor(){
         //# point15 - TS - this.route.bind(this)
         window.addEventListener("hashchange", this.route.bind(this));
+        this.isStart = false;
         this.routeTable = [];
         this.defaultRoute = null;
     }
-    setDefaultPage(page) {
+    setDefaultPage(page, params = null) {
         this.defaultRoute = {
             path: "",
-            page
+            page,
+            params
         };
     }
-    addRoutePath(path, page) {
+    addRoutePath(path, page, params = null) {
         this.routeTable.push({
             path,
-            page
+            page,
+            params
         });
+        if (!this.isStart) {
+            this.isStart = true;
+            // Execute next tick
+            setTimeout(this.route.bind(this), 0);
+        }
     }
     route() {
         const routePath = location.hash;
-        if (routePath === "" && this.defaultRoute) // point14 - TS - 추상 메소드
-        this.defaultRoute.page.render();
+        if (routePath === "" && this.defaultRoute) {
+            this.defaultRoute.page.render();
+            return;
+        }
         for (const routeInfo of this.routeTable)if (routePath.indexOf(routeInfo.path) >= 0) {
+            if (routeInfo.params) {
+                const parseParams = routePath.match(routeInfo.params);
+                if (parseParams) routeInfo.page.render.apply(null, [
+                    parseParams[1]
+                ]);
+            } else // point14 - TS - 추상 메소드
             routeInfo.page.render();
-            break;
+            return;
         }
     }
 }
@@ -657,78 +665,79 @@ var _newsFeedViewDefault = parcelHelpers.interopDefault(_newsFeedView);
 },{"./news-detail-view":"fPEzR","./news-feed-view":"kTnTq","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fPEzR":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-var _config = require("../config");
-var _api = require("../core/api");
-var _util = require("../core/util");
 var _view = require("../core/view");
 var _viewDefault = parcelHelpers.interopDefault(_view);
-class NewsDetailView extends (0, _viewDefault.default) {
-    constructor(containerId){
-        // # point1 - Template literals
-        const template = `
-    <div class="bg-gray-600 min-h-screen pb-8">
-      <div class="bg-white text-xl">
-        <div class="mx-auto px-4">
-          <div class="flex justify-between items-center py-6">
-            <div class="flex justify-start">
-              <h1 class="font-extrabold">Hacker News</h1>
-            </div>
-            <div class="items-center justify-end">
-              <a href="#/page/{{__currentPage__}}" class="text-gray-500">
-                <i class="fa fa-times"></i>
-              </a>
-            </div>
-          </div>
+var _api = require("../core/api");
+var _config = require("../config");
+const template = `
+<div class="bg-gray-600 min-h-screen pb-8">
+  <div class="bg-white text-xl">
+    <div class="mx-auto px-4">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex justify-start">
+          <h1 class="font-extrabold">Hacker News</h1>
         </div>
-      </div>
-  
-      <div class="h-full border rounded-xl bg-white m-6 p-4 ">
-        <h2>{{__title__}}</h2>
-        <div class="text-gray-400 h-20">
-          {{__content__}}
+        <div class="items-center justify-end">
+          <a href="#/page/{{__currentPage__}}" class="text-gray-500">
+            <i class="fa fa-times"></i>
+          </a>
         </div>
-        {{__comments__}}
       </div>
     </div>
-  `;
+  </div>
+
+  <div class="h-full border rounded-xl bg-white m-6 p-4 ">
+    <h2>{{__title__}}</h2>
+    <div class="text-gray-400 h-20">
+      {{__content__}}
+    </div>
+    {{__comments__}}
+  </div>
+</div>
+`;
+class NewsDetailView extends (0, _viewDefault.default) {
+    constructor(containerId, store){
         super(containerId, template);
+        this.store = store;
     }
-    render() {
-        const id = (0, _util.getId)();
-        const api = new (0, _api.NewsDetailApi)((0, _config.CONTENT_URL).replace("@id", String(id)));
-        const newsDetail = api.getData();
-        for (let feed of window.store.feeds)if (feed.id === Number(id)) {
-            feed.read = true;
-            break;
-        }
-        this.setTemplateData("currentPage", String(window.store.currentPage));
-        this.setTemplateData("title", newsDetail.title);
-        this.setTemplateData("content", newsDetail.content);
-        this.setTemplateData("comments", this.makeComment(newsDetail.comments));
+    render = (id)=>{
+        const api = new (0, _api.NewsDetailApi)((0, _config.CONTENT_URL).replace("@id", id));
+        const { title , content , comments  } = api.getData();
+        this.store.makeRead(Number(id));
+        this.setTemplateData("currentPage", this.store.currentPage.toString());
+        this.setTemplateData("title", title);
+        this.setTemplateData("content", content);
+        this.setTemplateData("comments", this.makeComment(comments));
         this.updateView();
-    }
+    };
     makeComment(comments) {
-        for (let comment of comments){
-            // # point9 댓글
+        for(let i = 0; i < comments.length; i++){
+            const comment = comments[i];
             this.addHtml(`
-      <div style="padding-left: ${comment.level * 40}px;" class="mt-4">
-        <div class="text-gray-400">
-          <i class="fa fa-sort-up mr-2"></i>
-          <strong>${comment.user}</strong> ${comment.time_ago}
-        </div>
-        <p class="text-gray-700">${comment.content}</p>
-      </div>      
-    `);
-            // # point9-1 대댓글
-            if (comment.comments.length > 0) // # point9-1 대댓글(재귀호출, 재귀호출로 넘기는 param-called)
-            this.addHtml(this.makeComment(comment.comments));
+        <div style="padding-left: ${comment.level * 40}px;" class="mt-4">
+          <div class="text-gray-400">
+            <i class="fa fa-sort-up mr-2"></i>
+            <strong>${comment.user}</strong> ${comment.time_ago}
+          </div>
+          <p class="text-gray-700">${comment.content}</p>
+        </div>      
+      `);
+            if (comment.comments.length > 0) this.addHtml(this.makeComment(comment.comments));
         }
         return this.getHtml();
     }
 }
 exports.default = NewsDetailView;
 
-},{"../core/api":"5JfgJ","../core/util":"65alb","../core/view":"gCNZN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../config":"gTux2"}],"5JfgJ":[function(require,module,exports) {
+},{"../config":"gTux2","../core/api":"5JfgJ","../core/view":"gCNZN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gTux2":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "NEWS_URL", ()=>NEWS_URL);
+parcelHelpers.export(exports, "CONTENT_URL", ()=>CONTENT_URL);
+const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
+const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5JfgJ":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 // # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
@@ -760,23 +769,14 @@ class NewsDetailApi extends Api {
     }
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"65alb":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "getId", ()=>getId);
-function getId() {
-    return Number(location.hash.substring(7)) || 1;
-}
-
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gCNZN":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 class View {
     constructor(containerId, template){
-        const containerElement = document.getElementById(containerId);
-        if (!containerElement) // 프로그램을 종료
-        throw "최상위 컨테이너가 없어 UI를 진행하지 못합니다.";
-        this.container = containerElement;
+        const conatinerElement = document.getElementById(containerId);
+        if (!conatinerElement) throw "최상위 컨테이너가 없어 UI를 진행하지 못합니다.";
+        this.container = conatinerElement;
         this.template = template;
         this.renderTemplate = template;
         this.htmlList = [];
@@ -802,65 +802,48 @@ class View {
 }
 exports.default = View;
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gTux2":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "NEWS_URL", ()=>NEWS_URL);
-parcelHelpers.export(exports, "CONTENT_URL", ()=>CONTENT_URL);
-const NEWS_URL = "https://api.hnpwa.com/v0/news/@page.json";
-const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
-
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kTnTq":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-var _config = require("../config");
-var _api = require("../core/api");
 var _view = require("../core/view");
 var _viewDefault = parcelHelpers.interopDefault(_view);
+var _api = require("../core/api");
+var _config = require("../config");
+const template = `
+<div class="bg-gray-600 min-h-screen">
+  <div class="bg-white text-xl">
+    <div class="mx-auto px-4">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex justify-start">
+          <h1 class="font-extrabold">Hacker News</h1>
+        </div>
+        <div class="items-center justify-end">
+          <a href="#/page/{{__prev_page__}}" class="text-gray-500">
+            Previous
+          </a>
+          <a href="#/page/{{__next_page__}}" class="text-gray-500 ml-4">
+            Next
+          </a>
+        </div>
+      </div> 
+    </div>
+  </div>
+  <div class="p-4 text-2xl text-gray-700">
+    {{__news_feed__}}        
+  </div>
+</div>
+`;
 class NewsFeedView extends (0, _viewDefault.default) {
-    constructor(containerId){
-        // 상위 클래스를 상속 받으면 상위 클래스의 constructor를 호출 해줘야 한다. (= super 키워드 호출)
-        const template = `
-      <div class="bg-gray-600 min-h-screen">
-        <div class="bg-white text-xl">
-          <div class="mx-auto px-4">
-            <div class="flex justify-between items-center py-6">
-              <div class="flex justify-start">
-                <h1 class="font-extrabold">Hacker News</h1>
-                <h2 style="padding-left:30px"> current page: {{__current_page__}}<h2>
-              </div>
-              <div class="items-center justify-end">
-                <a href="#/page/{{__prev_page__}}" class="text-gray-500">
-                  Previous
-                </a>
-                <a href="#/page/{{__next_page__}}" class="text-gray-500 ml-4">
-                  Next
-                </a>
-              </div>
-            </div> 
-          </div>
-        </div>
-        <div class="p-4 text-2xl text-gray-700">
-          {{__news_feed__}}        
-        </div>
-      </div>
-    `;
+    constructor(containerId, store){
         super(containerId, template);
-        this.api = new (0, _api.NewsFeedApi)((0, _config.NEWS_URL).replace("@page", String(window.store.currentPage)));
-        this.newsFeed = window.store.feeds;
-        if (this.newsFeed.length === 0) {
-            this.newsFeed = window.store.feeds = this.api.getData();
-            this.makeFeeds();
-        }
+        this.store = store;
+        this.api = new (0, _api.NewsFeedApi)((0, _config.NEWS_URL));
+        if (!this.store.hasFeeds) this.store.setFeeds(this.api.getData());
     }
-    render() {
-        window.store.currentPage = Number(location.hash.substring(7) || 1);
-        // todo: pagination할때 적당한 위치는 어디인가?
-        this.api = new (0, _api.NewsFeedApi)((0, _config.NEWS_URL).replace("@page", String(window.store.currentPage)));
-        this.newsFeed = window.store.feeds = this.api.getData();
-        this.makeFeeds();
-        for (let newsFeedItem of this.newsFeed){
-            const { read , id , title , comments_count , user , points , time_ago  } = newsFeedItem;
+    render = (page = "1")=>{
+        this.store.currentPage = Number(page);
+        for(let i = (this.store.currentPage - 1) * 10; i < this.store.currentPage * 10; i++){
+            const { id , title , comments_count , user , points , time_ago , read  } = this.store.getFeed(i);
             this.addHtml(`
         <div class="p-6 ${read ? "bg-red-500" : "bg-white"} mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
           <div class="flex">
@@ -882,19 +865,58 @@ class NewsFeedView extends (0, _viewDefault.default) {
       `);
         }
         this.setTemplateData("news_feed", this.getHtml());
-        this.setTemplateData("current_page", String(window.store.currentPage));
-        this.setTemplateData("prev_page", String(window.store.currentPage > 1 ? window.store.currentPage - 1 : 1));
-        this.setTemplateData("next_page", String(window.store.currentPage + 1));
+        this.setTemplateData("prev_page", String(this.store.prevPage));
+        this.setTemplateData("next_page", String(this.store.nextPage));
         this.updateView();
-    // this.newsFeed = window.store.feeds = this.api.getData();
-    // this.makeFeeds();
-    }
-    makeFeeds() {
-        this.newsFeed = this.newsFeed.map((feed)=>(feed.read = false, feed));
-    }
+    };
 }
 exports.default = NewsFeedView;
 
-},{"../core/view":"gCNZN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../core/api":"5JfgJ","../config":"gTux2"}]},["lSgxL","kuM8f"], "kuM8f", "parcelRequireed17")
+},{"../config":"gTux2","../core/api":"5JfgJ","../core/view":"gCNZN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1eAgN":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Store", ()=>Store);
+class Store {
+    constructor(){
+        this.feeds = [];
+        this._currentPage = 1;
+    }
+    get currentPage() {
+        return this._currentPage;
+    }
+    set currentPage(page) {
+        this._currentPage = page;
+    }
+    get nextPage() {
+        return this._currentPage + 1;
+    }
+    get prevPage() {
+        return this._currentPage > 1 ? this._currentPage - 1 : 1;
+    }
+    get numberOfFeed() {
+        return this.feeds.length;
+    }
+    get hasFeeds() {
+        return this.feeds.length > 0;
+    }
+    getFeed(position) {
+        return this.feeds[position];
+    }
+    getAllFeeds() {
+        return this.feeds;
+    }
+    setFeeds(feeds) {
+        this.feeds = feeds.map((feed)=>({
+                ...feed,
+                read: false
+            }));
+    }
+    makeRead(id) {
+        const feed = this.feeds.find((feed)=>feed.id === id);
+        if (feed) feed.read = true;
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["lSgxL","kuM8f"], "kuM8f", "parcelRequireed17")
 
 //# sourceMappingURL=index.6b815632.js.map
