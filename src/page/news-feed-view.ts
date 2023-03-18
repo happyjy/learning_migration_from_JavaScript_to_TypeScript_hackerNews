@@ -1,7 +1,6 @@
 import View from "../core/view";
 import { NewsFeedApi } from "../core/api";
-import { NewsStore, NewsFeed } from "../types";
-import { NEWS_URL } from "../config";
+import { NewsStore } from "../types";
 
 const template = `
 <div class="bg-gray-600 min-h-screen">
@@ -36,25 +35,20 @@ export default class NewsFeedView extends View {
     super(containerId, template);
 
     this.store = store;
-    this.api = new NewsFeedApi(NEWS_URL);
+    this.api = new NewsFeedApi();
   }
 
-  render = (page: string = "1"): void => {
+  // # point20 - async, await를 활용한 콜백 함수 없는 비동기 코드 작성
+  render = async (page: string = "1"): Promise<void> => {
     this.store.currentPage = Number(page);
 
     if (!this.store.hasFeeds) {
-      this.api.getDataWithPromise((feeds: NewsFeed[]) => {
-        //debugger;
-        console.log("### news-detail-view.ts > feeds: ", feeds);
-        this.store.setFeeds(feeds);
-        this.renderView();
-      });
+      console.log("🌄 step 1 > news-feed-view.ts > before await :");
+      this.store.setFeeds(await this.api.getData());
+      console.log("🌄 step 1-1 > news-feed-view.ts > after await :");
     }
 
-    this.renderView();
-  };
-
-  renderView = () => {
+    console.log("🌄 step 1-2 > news-feed-view.ts > start render :");
     for (
       let i = (this.store.currentPage - 1) * 10;
       i < this.store.currentPage * 10;
@@ -85,6 +79,7 @@ export default class NewsFeedView extends View {
         </div>    
       `);
     }
+    console.log("🌄 step 1-3 > news-feed-view.ts > end render :");
 
     this.setTemplateData("news_feed", this.getHtml());
     this.setTemplateData("prev_page", String(this.store.prevPage));

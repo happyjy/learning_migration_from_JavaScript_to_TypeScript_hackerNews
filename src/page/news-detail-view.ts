@@ -1,7 +1,6 @@
 import View from "../core/view";
 import { NewsDetailApi } from "../core/api";
 import { NewsComment, NewsDetail, NewsStore } from "../types";
-import { CONTENT_URL } from "../config";
 
 const template = `
 <div class="bg-gray-600 min-h-screen pb-8">
@@ -38,26 +37,23 @@ export default class NewsDetailView extends View {
     this.store = store;
   }
 
-  render = (id: string): void => {
-    const api = new NewsDetailApi(CONTENT_URL.replace("@id", id));
+  // # point20 - async, await를 활용한 콜백 함수 없는 비동기 코드 작성
+  render = async (id: string): Promise<void> => {
+    const api = new NewsDetailApi(id);
+    console.log(
+      "step 1 > news-detail-view.ts > new NewsDetailApi(id):",
+      new NewsDetailApi(id)
+    );
+    const { title, content, comments } = await api.getData();
+    console.log("step 1-1");
 
-    /**
-     * ## point19-2-1
-     *  - callback을 getDataWithPromise 함수 첫번째 param으로 넘겨 주고 있다.
-     *    이 callback은 결국에는 api.ts > Api class > getRequestWithPromise 함수로 전달되어 api response 값을 전달 받는다.
-     */
-    api.getDataWithPromise((data: NewsDetail) => {
-      const { title, content, comments } = data;
-      console.log("### news-detail-view.ts > data: ", data);
+    this.store.makeRead(Number(id));
+    this.setTemplateData("currentPage", this.store.currentPage.toString());
+    this.setTemplateData("title", title);
+    this.setTemplateData("content", content);
+    this.setTemplateData("comments", this.makeComment(comments));
 
-      this.store.makeRead(Number(id));
-      this.setTemplateData("currentPage", this.store.currentPage.toString());
-      this.setTemplateData("title", title);
-      this.setTemplateData("content", content);
-      this.setTemplateData("comments", this.makeComment(comments));
-
-      this.updateView();
-    });
+    this.updateView();
   };
 
   private makeComment(comments: NewsComment[]): string {

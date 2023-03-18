@@ -430,3 +430,12 @@ const obj1: Ia = {
 
 - callback을 getDataWithPromise 함수 첫번째 param으로 넘겨 주고 있다.
 - 이 callback은 결국에는 api.ts > Api class > getRequestWithPromise 함수로 전달되어 api response 값을 전달 받는다.
+
+# point20 - 콜백 함수 없는 비동기 코드 작성법
+
+- 자바스크립트 진영에서 비동기 코드를 어떻게 하면 잘 처리 할 수 있을까라는 오랜 엔지니어링 측면에서의 고민들을 많이 함.
+- 그 첫 번째 결과물: "promise" 메카니즘
+  - "promise" 메카니즘은 처음 보게 되면 이게 콜백보다 더 좋은 건가 콜백보다 더 복잡해 보이기도 하고 단순한 콜백이라고 했을 때는 promise보다 콜백이 훨씬 편한 것 같은데 이런 느낌이 들 정도였음
+- 그런데 그것은 이제 일종의 준비 작업 같은 스펙
+  - promise 이후, promise가 안착되고 "sync, await" 메카니즘 탄생
+  - <u>"sync, await" 비동기 함수 이용해서 분명히 내부적인 메카니즘은 콜백처럼 작동을 하는 비동기 코드임에도 불구하고 코드 상으로는 완전한 동기 코드처럼 보이게 작성을 할 수 있는 문법 체계</u>

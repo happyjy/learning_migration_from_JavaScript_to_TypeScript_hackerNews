@@ -34,6 +34,10 @@ export default class Router {
   }
 
   private route() {
+    console.log("### router.ts > route fn > location, routerTable: ", {
+      location,
+      routerTable: this.routeTable,
+    });
     const routePath: string = location.hash;
 
     if (routePath === "" && this.defaultRoute) {
@@ -42,6 +46,7 @@ export default class Router {
     }
 
     for (const routeInfo of this.routeTable) {
+      console.log("routeInfo.params: ", routeInfo.params);
       if (routePath.indexOf(routeInfo.path) >= 0) {
         if (routeInfo.params) {
           const parseParams = routePath.match(routeInfo.params);

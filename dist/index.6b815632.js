@@ -563,12 +563,17 @@ var _routerDefault = parcelHelpers.interopDefault(_router);
 var _page = require("./page");
 var _store = require("./store");
 const store = new (0, _store.Store)();
+console.log("## step init - start");
 const router = new (0, _routerDefault.default)();
 const newsFeedView = new (0, _page.NewsFeedView)("root", store);
 const newsDetailView = new (0, _page.NewsDetailView)("root", store);
 router.setDefaultPage(newsFeedView);
 router.addRoutePath("/page/", newsFeedView, /page\/(\d+)/);
 router.addRoutePath("/show/", newsDetailView, /show\/(\d+)/);
+console.log("## step init - end");
+setTimeout(()=>{
+    console.log("## step init - end > in setTimeout");
+});
 
 },{"./core/router":"f4hn2","./page":"4GSC5","./store":"1eAgN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"f4hn2":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -597,24 +602,32 @@ class Router {
         if (!this.isStart) {
             this.isStart = true;
             // Execute next tick
+            // 앱이 초기에 전체 다 설정된 이후 route가 동작해야 하기 때문에 event loop개념을 활용해 실행 컨텍스트의 제일 마지막으로 미루는 과정
             setTimeout(this.route.bind(this), 0);
         }
     }
     route() {
+        console.log("### router.ts > route fn > location, routerTable: ", {
+            location,
+            routerTable: this.routeTable
+        });
         const routePath = location.hash;
         if (routePath === "" && this.defaultRoute) {
             this.defaultRoute.page.render();
             return;
         }
-        for (const routeInfo of this.routeTable)if (routePath.indexOf(routeInfo.path) >= 0) {
-            if (routeInfo.params) {
-                const parseParams = routePath.match(routeInfo.params);
-                if (parseParams) routeInfo.page.render.apply(null, [
-                    parseParams[1]
-                ]);
-            } else // point14 - TS - 추상 메소드
-            routeInfo.page.render();
-            return;
+        for (const routeInfo of this.routeTable){
+            console.log("routeInfo.params: ", routeInfo.params);
+            if (routePath.indexOf(routeInfo.path) >= 0) {
+                if (routeInfo.params) {
+                    const parseParams = routePath.match(routeInfo.params);
+                    if (parseParams) routeInfo.page.render.apply(null, [
+                        parseParams[1]
+                    ]);
+                } else // point14 - TS - 추상 메소드
+                routeInfo.page.render();
+                return;
+            }
         }
     }
 }
@@ -668,7 +681,6 @@ parcelHelpers.defineInteropFlag(exports);
 var _view = require("../core/view");
 var _viewDefault = parcelHelpers.interopDefault(_view);
 var _api = require("../core/api");
-var _config = require("../config");
 const template = `
 <div class="bg-gray-600 min-h-screen pb-8">
   <div class="bg-white text-xl">
@@ -700,22 +712,18 @@ class NewsDetailView extends (0, _viewDefault.default) {
         super(containerId, template);
         this.store = store;
     }
-    render = (id)=>{
-        const api = new (0, _api.NewsDetailApi)((0, _config.CONTENT_URL).replace("@id", id));
-        /**
-     * ## point19-2-1
-     *  - callback을 getDataWithPromise 함수 첫번째 param으로 넘겨 주고 있다.
-     *    이 callback은 결국에는 api.ts > Api class > getRequestWithPromise 함수로 전달되어 api response 값을 전달 받는다.
-     */ api.getDataWithPromise((data)=>{
-            const { title , content , comments  } = data;
-            console.log("### news-detail-view.ts > data: ", data);
-            this.store.makeRead(Number(id));
-            this.setTemplateData("currentPage", this.store.currentPage.toString());
-            this.setTemplateData("title", title);
-            this.setTemplateData("content", content);
-            this.setTemplateData("comments", this.makeComment(comments));
-            this.updateView();
-        });
+    // # point20 - async, await를 활용한 콜백 함수 없는 비동기 코드 작성
+    render = async (id)=>{
+        const api = new (0, _api.NewsDetailApi)(id);
+        console.log("step 1 > news-detail-view.ts > new NewsDetailApi(id):", new (0, _api.NewsDetailApi)(id));
+        const { title , content , comments  } = await api.getData();
+        console.log("step 1-1");
+        this.store.makeRead(Number(id));
+        this.setTemplateData("currentPage", this.store.currentPage.toString());
+        this.setTemplateData("title", title);
+        this.setTemplateData("content", content);
+        this.setTemplateData("comments", this.makeComment(comments));
+        this.updateView();
     };
     makeComment(comments) {
         for(let i = 0; i < comments.length; i++){
@@ -736,7 +744,7 @@ class NewsDetailView extends (0, _viewDefault.default) {
 }
 exports.default = NewsDetailView;
 
-},{"../core/view":"gCNZN","../core/api":"5JfgJ","../config":"gTux2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gCNZN":[function(require,module,exports) {
+},{"../core/view":"gCNZN","../core/api":"5JfgJ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gCNZN":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 class View {
@@ -772,66 +780,53 @@ exports.default = View;
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5JfgJ":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-// # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
-parcelHelpers.export(exports, "Api", ()=>Api);
 parcelHelpers.export(exports, "NewsFeedApi", ()=>NewsFeedApi);
 parcelHelpers.export(exports, "NewsDetailApi", ()=>NewsDetailApi);
+var _config = require("../config");
 class Api {
     constructor(url){
         this.url = url;
-        this.xhr = new XMLHttpRequest();
     }
-    getRequestWithXHR(cb) {
-        // ## point19-1 XMLHttpRequest.open() 옵션
-        this.xhr.open("GET", this.url, false);
-        this.xhr.open("GET", this.url);
-        this.xhr.addEventListener("load", ()=>{
-            //debugger;
-            cb(JSON.parse(this.xhr.response));
-        });
-        this.xhr.send();
-    }
-    getRequestWithPromise(cb) {
-        fetch(this.url).then((response)=>{
-            //debugger;
-            // return을 해야! -> 다음 then으로 return 값이 전달
-            const resposneJson = response.json();
-            console.log({
-                "resposneJson: ": resposneJson
-            });
-            return resposneJson;
-        }).then(cb).catch(()=>{
-            console.error("데이타를 불러오지 못했습니다.");
-        });
-    }
-    setUrl(url) {
-        this.url = url;
+    /**
+   * async를 function앞에 붙이면 ?
+   *  - 비동기 함수가 된다.
+   *  - async를 붙인 함수는 Promise를 return
+   *    - 그래서 return 타입은 "Promise<AjaxResponse>"
+   */ // # point20 - async, await를 활용한 콜백 함수 없는 비동기 코드 작성
+    async request() {
+        console.log("\uD83C\uDD50\uD83C\uDD5F\uD83C\uDD58 step 3 > api.ts > Class Api > this.url: ", this.url);
+        const resultFetch = await fetch(this.url);
+        console.log("\uD83C\uDD50\uD83C\uDD5F\uD83C\uDD58 step 3-1 > api.ts > Class Api > resultFetch: ", resultFetch);
+        const response = resultFetch;
+        // const response = await fetch(this.url);
+        const responseJson = await response.json();
+        console.log("\uD83C\uDD50\uD83C\uDD5F\uD83C\uDD58 step 3-2 > api.ts > Class Api > responseJson: ", responseJson);
+        return responseJson;
     }
 }
+exports.default = Api;
 class NewsFeedApi extends Api {
-    constructor(url){
-        super(url);
+    constructor(){
+        super((0, _config.NEWS_URL));
     }
-    getDataWithXHR(cb) {
-        return this.getRequestWithXHR(cb);
-    }
-    getDataWithPromise(cb) {
-        return this.getRequestWithPromise(cb);
+    // # point20 - async, await를 활용한 콜백 함수 없는 비동기 코드 작성
+    async getData() {
+        console.log("\uD83C\uDD50\uD83C\uDD5F\uD83C\uDD58 step 2 > NewsFeedApi > async getData");
+        return this.request();
     }
 }
 class NewsDetailApi extends Api {
-    constructor(url){
-        super(url);
+    constructor(id){
+        super((0, _config.CONTENT_URL).replace("@id", id));
     }
-    getDataWithXHR(cb) {
-        return this.getRequestWithXHR(cb);
-    }
-    getDataWithPromise(cb) {
-        return this.getRequestWithPromise(cb);
+    // # point20 - async, await를 활용한 콜백 함수 없는 비동기 코드 작성
+    async getData() {
+        console.log("\uD83C\uDD50\uD83C\uDD5F\uD83C\uDD58 step 2 > NewsDetailApi > async getData");
+        return this.request();
     }
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gTux2":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","../config":"gTux2"}],"gTux2":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "NEWS_URL", ()=>NEWS_URL);
@@ -845,7 +840,6 @@ parcelHelpers.defineInteropFlag(exports);
 var _view = require("../core/view");
 var _viewDefault = parcelHelpers.interopDefault(_view);
 var _api = require("../core/api");
-var _config = require("../config");
 const template = `
 <div class="bg-gray-600 min-h-screen">
   <div class="bg-white text-xl">
@@ -874,19 +868,17 @@ class NewsFeedView extends (0, _viewDefault.default) {
     constructor(containerId, store){
         super(containerId, template);
         this.store = store;
-        this.api = new (0, _api.NewsFeedApi)((0, _config.NEWS_URL));
+        this.api = new (0, _api.NewsFeedApi)();
     }
-    render = (page = "1")=>{
+    // # point20 - async, await를 활용한 콜백 함수 없는 비동기 코드 작성
+    render = async (page = "1")=>{
         this.store.currentPage = Number(page);
-        if (!this.store.hasFeeds) this.api.getDataWithPromise((feeds)=>{
-            //debugger;
-            console.log("### news-detail-view.ts > feeds: ", feeds);
-            this.store.setFeeds(feeds);
-            this.renderView();
-        });
-        this.renderView();
-    };
-    renderView = ()=>{
+        if (!this.store.hasFeeds) {
+            console.log("\uD83C\uDF04 step 1 > news-feed-view.ts > before await :");
+            this.store.setFeeds(await this.api.getData());
+            console.log("\uD83C\uDF04 step 1-1 > news-feed-view.ts > after await :");
+        }
+        console.log("\uD83C\uDF04 step 1-2 > news-feed-view.ts > start render :");
         for(let i = (this.store.currentPage - 1) * 10; i < this.store.currentPage * 10; i++){
             const { id , title , comments_count , user , points , time_ago , read  } = this.store.getFeed(i);
             this.addHtml(`
@@ -909,6 +901,7 @@ class NewsFeedView extends (0, _viewDefault.default) {
         </div>    
       `);
         }
+        console.log("\uD83C\uDF04 step 1-3 > news-feed-view.ts > end render :");
         this.setTemplateData("news_feed", this.getHtml());
         this.setTemplateData("prev_page", String(this.store.prevPage));
         this.setTemplateData("next_page", String(this.store.nextPage));
@@ -917,7 +910,7 @@ class NewsFeedView extends (0, _viewDefault.default) {
 }
 exports.default = NewsFeedView;
 
-},{"../core/view":"gCNZN","../core/api":"5JfgJ","../config":"gTux2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1eAgN":[function(require,module,exports) {
+},{"../core/view":"gCNZN","../core/api":"5JfgJ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1eAgN":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Store", ()=>Store);
