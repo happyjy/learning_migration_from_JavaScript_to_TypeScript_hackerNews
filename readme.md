@@ -465,3 +465,43 @@ const obj1: Ia = {
   - setDefaultPage 메서드: 기본 page router 설정
   - addRoutePath 메서드: view객체를 routerTable에 등록
   - route 메서드: constoructor에서 'haschange' event를 event listener에 등록
+
+# 정리 - render의 두가지 동작
+
+- 현재 이 앱에는 두개의 view(newsFeedView, newsDetailView)가 있다.
+- 이 두 view의 클래스는 view.ts 추상클래스를 상속 받아서 구현되어 있다.
+- view.ts 추상클래스에 render 추상메서드가 있다.
+  - 이 추상 메서드는 newsFeedView, newsDetailView 이 두 클래스에 맞게 구현 되어 있다.
+- render 메서드에서는 크게 두가지 동작을 한다.
+  1. api 비동기 호출
+  2. redner of 1번에서 받은 데이터
+
+# 정리 - api 호출
+
+- 두개의 view(newsFeedView, newsDetailView)의 render 메서드에 의해서 호출 될때 보여줄 data를 가져오기 위해서 api를 호출 한다.
+- async, await를 활용해서 구현 되어 있다.
+
+# 정리 - redner(Template literals)
+
+- render시 Template literals을 활용하며
+- Template literals에 특정 규칙({{\_\_템플릿 명칭\_\_}})을 정하고
+  js의 문자열 replace함수를 활용해 render할 dom string을 생성
+- dome의 innerHTML property에 render할 dom string을 할당함으로 render한다.
+
+# 정리 - redner - makeComment (in NewsDetailView)
+
+- NewsDetail에는 'comments' property가 존재
+- 'comments' property에는 또 'comments' property가 존재 하며 level property로 depth를 구분한다.
+- 이런 자료구조로 구성되어 있다 보니 재귀호출(NewsDetailView 클래스 makeComment 메서드)로 comment를 render한다.
+- 아래 두개 타입은 "types > index.ts"에서 확인가능
+
+```ts
+interface NewsDetail extends News {
+  readonly comments: NewsComment[];
+}
+
+interface NewsComment extends News {
+  readonly comments: NewsComment[];
+  readonly level: number;
+}
+```
