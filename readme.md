@@ -405,3 +405,28 @@ const obj1: Ia = {
   - 훨씬 더 안전한 코드를 작성할 수 있다는 것을 알수 있다.
   - 사용하는 쪽에서도 훨씬 더 편리해짐
   - 코드가 깔끔해지고 양도 줄어 드는 것을 확인 할 수 있었다.
+
+# point19 - XHR to Fetch & Promise
+
+- 지금까지 xhr 관련된 아작스 호출 코드는 동기식 코드로 작성을 했음.
+  - 이 강의에서는 비동기 코드로 바꾸는 단계
+- <u>동기로 api처리를 했을때 상황 설명</u>
+
+  - XMLHttpRequest.open()의 세 번째 인자 옵션을 없앴을 때
+    XMLHttpRequest.send()한 이후에도 샌드를 한 이후에 바로 xhr의 response 데이터를 읽을 수가 없음
+    - 이유: send 이후 다음 라인에 api 응답이 올 리가 없다.  
+      (아주 짧게라도 몇 초 0.5초 0.2초 혹은 1초 걸려서 그 이후에 데이터가 응답이 오기 때문)
+
+-
+
+## point19-1 XMLHttpRequest.open() 옵션
+
+- 3번째 param 은 비동기 여부 옵션
+- https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/open
+
+## point19-2 비동기로 api 처리를 했을때 상황 설명
+
+### point19-2-1fetch api 사용시(비동기) api response를 코드에서 전달 받는 방법
+
+- callback을 getDataWithPromise 함수 첫번째 param으로 넘겨 주고 있다.
+- 이 callback은 결국에는 api.ts > Api class > getRequestWithPromise 함수로 전달되어 api response 값을 전달 받는다.

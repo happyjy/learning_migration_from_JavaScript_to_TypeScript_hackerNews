@@ -570,7 +570,7 @@ router.setDefaultPage(newsFeedView);
 router.addRoutePath("/page/", newsFeedView, /page\/(\d+)/);
 router.addRoutePath("/show/", newsDetailView, /show\/(\d+)/);
 
-},{"./core/router":"f4hn2","./page":"4GSC5","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./store":"1eAgN"}],"f4hn2":[function(require,module,exports) {
+},{"./core/router":"f4hn2","./page":"4GSC5","./store":"1eAgN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"f4hn2":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 class Router {
@@ -702,13 +702,20 @@ class NewsDetailView extends (0, _viewDefault.default) {
     }
     render = (id)=>{
         const api = new (0, _api.NewsDetailApi)((0, _config.CONTENT_URL).replace("@id", id));
-        const { title , content , comments  } = api.getData();
-        this.store.makeRead(Number(id));
-        this.setTemplateData("currentPage", this.store.currentPage.toString());
-        this.setTemplateData("title", title);
-        this.setTemplateData("content", content);
-        this.setTemplateData("comments", this.makeComment(comments));
-        this.updateView();
+        /**
+     * ## point19-2-1
+     *  - callback을 getDataWithPromise 함수 첫번째 param으로 넘겨 주고 있다.
+     *    이 callback은 결국에는 api.ts > Api class > getRequestWithPromise 함수로 전달되어 api response 값을 전달 받는다.
+     */ api.getDataWithPromise((data)=>{
+            const { title , content , comments  } = data;
+            console.log("### news-detail-view.ts > data: ", data);
+            this.store.makeRead(Number(id));
+            this.setTemplateData("currentPage", this.store.currentPage.toString());
+            this.setTemplateData("title", title);
+            this.setTemplateData("content", content);
+            this.setTemplateData("comments", this.makeComment(comments));
+            this.updateView();
+        });
     };
     makeComment(comments) {
         for(let i = 0; i < comments.length; i++){
@@ -729,47 +736,7 @@ class NewsDetailView extends (0, _viewDefault.default) {
 }
 exports.default = NewsDetailView;
 
-},{"../config":"gTux2","../core/api":"5JfgJ","../core/view":"gCNZN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gTux2":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "NEWS_URL", ()=>NEWS_URL);
-parcelHelpers.export(exports, "CONTENT_URL", ()=>CONTENT_URL);
-const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
-const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5JfgJ":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-// # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
-parcelHelpers.export(exports, "Api", ()=>Api);
-parcelHelpers.export(exports, "NewsFeedApi", ()=>NewsFeedApi);
-parcelHelpers.export(exports, "NewsDetailApi", ()=>NewsDetailApi);
-class Api {
-    constructor(url){
-        this.url = url;
-        this.ajax = new XMLHttpRequest();
-    }
-    getRequest() {
-        this.ajax.open("GET", this.url, false);
-        this.ajax.send();
-        return JSON.parse(this.ajax.response);
-    }
-    setUrl(url) {
-        this.url = url;
-    }
-}
-class NewsFeedApi extends Api {
-    getData() {
-        return this.getRequest();
-    }
-}
-class NewsDetailApi extends Api {
-    getData() {
-        return this.getRequest();
-    }
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gCNZN":[function(require,module,exports) {
+},{"../core/view":"gCNZN","../core/api":"5JfgJ","../config":"gTux2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gCNZN":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 class View {
@@ -801,6 +768,76 @@ class View {
     }
 }
 exports.default = View;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5JfgJ":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// # point12 - TS - 상속을 활용한 getData function을 클래스로 변환
+parcelHelpers.export(exports, "Api", ()=>Api);
+parcelHelpers.export(exports, "NewsFeedApi", ()=>NewsFeedApi);
+parcelHelpers.export(exports, "NewsDetailApi", ()=>NewsDetailApi);
+class Api {
+    constructor(url){
+        this.url = url;
+        this.xhr = new XMLHttpRequest();
+    }
+    getRequestWithXHR(cb) {
+        // ## point19-1 XMLHttpRequest.open() 옵션
+        this.xhr.open("GET", this.url, false);
+        this.xhr.open("GET", this.url);
+        this.xhr.addEventListener("load", ()=>{
+            //debugger;
+            cb(JSON.parse(this.xhr.response));
+        });
+        this.xhr.send();
+    }
+    getRequestWithPromise(cb) {
+        fetch(this.url).then((response)=>{
+            //debugger;
+            // return을 해야! -> 다음 then으로 return 값이 전달
+            const resposneJson = response.json();
+            console.log({
+                "resposneJson: ": resposneJson
+            });
+            return resposneJson;
+        }).then(cb).catch(()=>{
+            console.error("데이타를 불러오지 못했습니다.");
+        });
+    }
+    setUrl(url) {
+        this.url = url;
+    }
+}
+class NewsFeedApi extends Api {
+    constructor(url){
+        super(url);
+    }
+    getDataWithXHR(cb) {
+        return this.getRequestWithXHR(cb);
+    }
+    getDataWithPromise(cb) {
+        return this.getRequestWithPromise(cb);
+    }
+}
+class NewsDetailApi extends Api {
+    constructor(url){
+        super(url);
+    }
+    getDataWithXHR(cb) {
+        return this.getRequestWithXHR(cb);
+    }
+    getDataWithPromise(cb) {
+        return this.getRequestWithPromise(cb);
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gTux2":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "NEWS_URL", ()=>NEWS_URL);
+parcelHelpers.export(exports, "CONTENT_URL", ()=>CONTENT_URL);
+const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
+const CONTENT_URL = "https://api.hnpwa.com/v0/item/@id.json";
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kTnTq":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -838,10 +875,18 @@ class NewsFeedView extends (0, _viewDefault.default) {
         super(containerId, template);
         this.store = store;
         this.api = new (0, _api.NewsFeedApi)((0, _config.NEWS_URL));
-        if (!this.store.hasFeeds) this.store.setFeeds(this.api.getData());
     }
     render = (page = "1")=>{
         this.store.currentPage = Number(page);
+        if (!this.store.hasFeeds) this.api.getDataWithPromise((feeds)=>{
+            //debugger;
+            console.log("### news-detail-view.ts > feeds: ", feeds);
+            this.store.setFeeds(feeds);
+            this.renderView();
+        });
+        this.renderView();
+    };
+    renderView = ()=>{
         for(let i = (this.store.currentPage - 1) * 10; i < this.store.currentPage * 10; i++){
             const { id , title , comments_count , user , points , time_ago , read  } = this.store.getFeed(i);
             this.addHtml(`
@@ -872,7 +917,7 @@ class NewsFeedView extends (0, _viewDefault.default) {
 }
 exports.default = NewsFeedView;
 
-},{"../config":"gTux2","../core/api":"5JfgJ","../core/view":"gCNZN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1eAgN":[function(require,module,exports) {
+},{"../core/view":"gCNZN","../core/api":"5JfgJ","../config":"gTux2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1eAgN":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Store", ()=>Store);
