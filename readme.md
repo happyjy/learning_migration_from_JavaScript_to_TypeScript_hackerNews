@@ -439,3 +439,29 @@ const obj1: Ia = {
 - 그런데 그것은 이제 일종의 준비 작업 같은 스펙
   - promise 이후, promise가 안착되고 "sync, await" 메카니즘 탄생
   - <u>"sync, await" 비동기 함수 이용해서 분명히 내부적인 메카니즘은 콜백처럼 작동을 하는 비동기 코드임에도 불구하고 코드 상으로는 완전한 동기 코드처럼 보이게 작성을 할 수 있는 문법 체계</u>
+
+# 정리 - 프로그램 동작 원리
+
+- index.html에 app.ts파일 하나가 import되어 있다.
+- 즉 app.ts로 인해서 앱이 초기화 된다.
+  - 초기화시 2개 페이지(newsFeedView, newsDetailView) 객체 생성, router table 설정 이 된다.
+  - routing이 결정된 이후 api -> render하는 동작을 거치게 된다.
+  - 2개 페이지 객체 생성 -> router -> api -> render 이 순서 대로 앱이 초기화 실행된다.
+
+# 정리 - router 원리
+
+- router.ts가 구현체 (Router class)
+- router 2가지 설명(init, 동작 순서)
+
+  - init
+    - app.ts에서 default page와 router할 view객체를 routeTable에 등록
+  - 동작 시점
+    - Router class constructor에서 hashchange이벤트에 route메서드를 실행하도록 설정
+    - url 변경시 hashchage event가 trigger되고 url주소와 routeTable의 정보를 비교해 route해준다.
+
+- Router class 속성, 메서드 설명
+  - routeTable 속성
+    - view객체(NewsFeedView, NewsDetailView)등록
+  - setDefaultPage 메서드: 기본 page router 설정
+  - addRoutePath 메서드: view객체를 routerTable에 등록
+  - route 메서드: constoructor에서 'haschange' event를 event listener에 등록

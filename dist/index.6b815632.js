@@ -580,6 +580,8 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 class Router {
     constructor(){
+        // event type 'hashchange'는 url 주소가 변경되면 동작한다.
+        console.log("### router.ts > constructor > setting hashchange");
         //# point15 - TS - this.route.bind(this)
         window.addEventListener("hashchange", this.route.bind(this));
         this.isStart = false;
@@ -599,11 +601,19 @@ class Router {
             page,
             params
         });
+        console.log("### router.ts > addRoutePath fn > { path, page, params, this.isStart}: ", {
+            path,
+            page,
+            params,
+            "this.isStart": this.isStart
+        });
         if (!this.isStart) {
             this.isStart = true;
             // Execute next tick
-            // 앱이 초기에 전체 다 설정된 이후 route가 동작해야 하기 때문에 event loop개념을 활용해 실행 컨텍스트의 제일 마지막으로 미루는 과정
-            setTimeout(this.route.bind(this), 0);
+            /**
+       * 앱이 초기에 전체 다 설정된 이후 route가 동작해야 하기 때문에 event loop개념을 활용해 실행 컨텍스트의 제일 마지막으로 미루는 과정
+       * 그래서 app.ts에서 init 과정이 다끝난 이후 'this.route.bind(this)'가 동작한다.
+       */ setTimeout(this.route.bind(this), 0);
         }
     }
     route() {
